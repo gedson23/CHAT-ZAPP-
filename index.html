@@ -53,7 +53,7 @@
     }
     .contact-info { flex: 1; min-width: 0; }
     .contact-name { font-size: 16px; color: #e0e0e0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .last-msg { font-size: 13px; color: #999; margin-top: 2px; white-space: nowrap; overflow: hidden; }
+    .last-msg { font-size: 13px; color: #999; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .contact-meta { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
     .msg-time { font-size: 12px; color: #888; }
     .badge {
@@ -92,6 +92,7 @@
       flex: 1; overflow-y: auto; padding: 12px;
       display: flex; flex-direction: column; gap: 4px;
       background: #e5ddd5 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M30 30 L70 70 M70 30 L30 70" stroke="rgba(0,0,0,0.08)" stroke-width="2"/></svg>') repeat;
+      background-size: cover;
     }
     .message {
       max-width: 80%; padding: 7px 10px; border-radius: 8px;
@@ -103,6 +104,49 @@
     .message .time { font-size: 10px; color: #666; text-align: right; margin-top: 4px; }
     .message img, .message video { max-width: 200px; border-radius: 4px; margin-top: 4px; }
     .message audio { width: 180px; margin-top: 4px; }
+
+    .conn-bar {
+      background: #1f2c33;
+      padding: 8px 12px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+      border-bottom: 1px solid #222;
+      flex-shrink: 0;
+    }
+    .conn-bar input {
+      flex: 1;
+      min-width: 100px;
+      background: #2a3942;
+      border: none;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      outline: none;
+      font-size: 13px;
+    }
+    .conn-bar input::placeholder { color: #888; }
+    .btn {
+      background: #25d366;
+      border: none;
+      color: white;
+      border-radius: 20px;
+      padding: 8px 14px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .btn-outline { background: transparent; border: 1px solid #25d366; color: #25d366; }
+    .status-badge {
+      background: #2a3942;
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 11px;
+      color: #ccc;
+    }
+    .connected { color: #25d366; }
+    .disconnected { color: #ff6b6b; }
 
     .input-bar {
       background: #f0f0f0; padding: 8px 12px; display: flex; gap: 6px;
@@ -158,10 +202,18 @@
     <button class="icon-btn" id="settingsToggle" title="Personalizar">⚙️</button>
   </div>
 
+  <!-- Barra de conexão (sempre visível) -->
+  <div class="conn-bar">
+    <input type="text" id="myIdInput" placeholder="Seu ID" value="">
+    <input type="text" id="remoteIdInput" placeholder="IDs parceiros (vírgula)" value="">
+    <button class="btn" id="connectBtn">Conectar</button>
+    <span id="connectionStatus" class="status-badge disconnected">Off</span>
+  </div>
+
   <div class="main-content">
     <div id="conversationsScreen" class="conversations-panel">
       <div class="contact-list" id="contactList">
-        <p style="color:#555; text-align:center; margin-top:80px;">Nenhum contato. Toque no + para adicionar.</p>
+        <p style="color:#555; text-align:center; margin-top:80px;">Nenhum contato.</p>
       </div>
       <button class="fab" id="addContactFab">+</button>
     </div>
@@ -249,7 +301,7 @@
     } catch(e) {}
   }
 
-  // ===== ELEMENTOS =====
+  // ===== ELEMENTOS DA UI =====
   const conversationsScreen = document.getElementById('conversationsScreen');
   const chatScreen = document.getElementById('chatScreen');
   const contactList = document.getElementById('contactList');
@@ -287,17 +339,20 @@
   const resetBgBtn = document.getElementById('resetBgBtn');
   const closeSettingsBtn = document.getElementById('closeSettingsBtn');
   const toast = document.getElementById('toast');
+  const myIdInput = document.getElementById('myIdInput');
+  const remoteIdInput = document.getElementById('remoteIdInput');
+  const connectBtn = document.getElementById('connectBtn');
+  const connectionStatus = document.getElementById('connectionStatus');
 
-  // ===== VARIÁVEIS =====
+  // ===== VARIÁVEIS GLOBAIS =====
   let peer, myId = '';
   let connections = {};
-  let chatHistory = {};
-  let unreadCounts = {};
+  let chatHistory = {};       // { partnerId: [ { type, content, time, sent } ] }
+  let unreadCounts = {};      // { partnerId: number }
   let currentPartner = null;
   let mediaRecorder, audioChunks = [], recording = false;
   let currentCall = null, localStream = null;
   let callStartTime = null, callTimerInterval = null;
-  let pendingConnectionIds = [];  // IDs a conectar assim que o peer abrir
 
   // ===== EMOJIS =====
   const EMOJIS = ['😀','😂','❤️','😍','😭','😘','😊','🤔','😅','😢','👍','🙏','💪','🔥','✨','🎉','😱','👀','💔','😎','🤗','🤣','😋','😇','😜','😌','😈','💋','💖','💗','💘','💝','🎂','☀️','🌙','☕','🍕','🎸','⚽','🚗','✈️','🌟','🐶','🐱','🌸','🌺','🍀'];
@@ -328,6 +383,22 @@
     cameraInput.value = '';
   });
 
+  // ===== PERSISTÊNCIA (LocalStorage) =====
+  function saveData() {
+    localStorage.setItem('p2p_chatHistory', JSON.stringify(chatHistory));
+    localStorage.setItem('p2p_unreadCounts', JSON.stringify(unreadCounts));
+    localStorage.setItem('p2p_partners', JSON.stringify(Object.keys(connections)));
+  }
+
+  function loadData() {
+    try {
+      const savedHistory = localStorage.getItem('p2p_chatHistory');
+      if (savedHistory) chatHistory = JSON.parse(savedHistory);
+      const savedUnread = localStorage.getItem('p2p_unreadCounts');
+      if (savedUnread) unreadCounts = JSON.parse(savedUnread);
+    } catch(e) {}
+  }
+
   // ===== FUNÇÕES DE CONEXÃO =====
   function showToast(msg) {
     toast.textContent = msg;
@@ -335,16 +406,39 @@
     setTimeout(() => toast.classList.remove('show'), 2000);
   }
 
+  function updateStatus() {
+    const count = Object.keys(connections).length;
+    connectionStatus.textContent = count ? `${count} online` : 'Off';
+    connectionStatus.className = `status-badge ${count ? 'connected' : 'disconnected'}`;
+  }
+
   function initializeApp() {
+    loadData();
     let savedId = localStorage.getItem('p2p_myId');
-    if (!savedId) {
+    if (savedId) {
+      myIdInput.value = savedId;
+      myId = savedId;
+      initPeer();
+      applyBackground();
+      // Tentar reconectar aos parceiros salvos
+      const savedPartners = JSON.parse(localStorage.getItem('p2p_partners') || '[]');
+      if (savedPartners.length > 0) {
+        remoteIdInput.value = savedPartners.join(', ');
+        // Reconectar em cascata
+        setTimeout(() => {
+          savedPartners.forEach(id => addPartner(id));
+        }, 1500);
+      }
+    } else {
+      // Primeira visita: pedir ID
       savedId = prompt('Defina seu ID (ex.: Joao):');
       if (!savedId) return;
+      myIdInput.value = savedId;
+      myId = savedId;
       localStorage.setItem('p2p_myId', savedId);
+      initPeer();
+      applyBackground();
     }
-    myId = savedId;
-    initPeer(); // Inicializa o peer com o ID salvo
-    applyBackground();
   }
 
   function initPeer() {
@@ -352,36 +446,21 @@
     peer = new Peer(myId, {
       config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] }
     });
-
     peer.on('open', (id) => {
       myId = id;
+      connectionStatus.textContent = `ID: ${id}`;
+      connectionStatus.className = 'status-badge connected';
       localStorage.setItem('p2p_myId', id);
-      // Se havia conexões pendentes (adicionadas pelo botão Conectar ou +)
-      if (pendingConnectionIds.length > 0) {
-        pendingConnectionIds.forEach(remoteId => {
-          if (!connections[remoteId]) {
-            const conn = peer.connect(remoteId, { reliable: true });
-            connections[remoteId] = conn;
-            setupConn(conn);
-          }
-        });
-        pendingConnectionIds = [];
-        renderContactList();
-        updateStatus();
-      }
     });
-
     peer.on('connection', (conn) => {
       if (!connections[conn.peer]) {
         connections[conn.peer] = conn;
         setupConn(conn);
         renderContactList();
         updateStatus();
-      } else {
-        conn.close();
-      }
+        saveData();
+      } else conn.close();
     });
-
     peer.on('call', (call) => {
       incomingCallerId.textContent = call.peer;
       incomingCallPanel.classList.remove('hidden');
@@ -395,60 +474,310 @@
       };
       rejectCallBtn.onclick = () => { call.close(); incomingCallPanel.classList.add('hidden'); };
     });
-
-    peer.on('error', (e) => alert('Erro: ' + e.message));
+    peer.on('error', (e) => console.error(e));
   }
 
-  function updateStatus() {
-    const count = Object.keys(connections).length;
-    // Atualiza algum elemento se necessário (opcional)
+  function addPartner(partnerId) {
+    if (connections[partnerId]) return;
+    if (!peer || !peer.id) {
+      // Peer ainda não abriu – agendar para depois
+      setTimeout(() => addPartner(partnerId), 1000);
+      return;
+    }
+    const conn = peer.connect(partnerId, { reliable: true });
+    connections[partnerId] = conn;
+    setupConn(conn);
+    renderContactList();
+    updateStatus();
+    saveData();
   }
 
-  // ===== ADICIONAR PARCEIRO (via botão +) =====
-  addContactFab.addEventListener('click', () => {
-    addPartnerModal.classList.remove('hidden');
-    newPartnerInput.focus();
+  // Conectar via botão "Conectar" (usa o campo remoteIdInput)
+  connectBtn.addEventListener('click', () => {
+    const remotes = remoteIdInput.value.split(',').map(s => s.trim()).filter(s => s);
+    if (!remotes.length) return showToast('Digite pelo menos um ID');
+    if (!peer || !peer.id) {
+      showToast('Aguardando registro do ID...');
+      return;
+    }
+    remotes.forEach(id => addPartner(id));
+    localStorage.setItem('p2p_partners', JSON.stringify(Object.keys(connections)));
   });
+
+  // Conectar via botão flutuante "+" (abre modal)
+  addContactFab.addEventListener('click', () => addPartnerModal.classList.remove('hidden'));
   cancelAddBtn.addEventListener('click', () => addPartnerModal.classList.add('hidden'));
   confirmAddBtn.addEventListener('click', () => {
     const partnerId = newPartnerInput.value.trim();
-    if (!partnerId) return alert('Digite o ID');
-    if (connections[partnerId]) {
-      alert('Já conectado a ' + partnerId);
-      addPartnerModal.classList.add('hidden');
-      newPartnerInput.value = '';
-      return;
-    }
-    // Adiciona como pendente se o peer ainda não abriu, senão conecta direto
-    if (peer && peer.id) {
-      const conn = peer.connect(partnerId, { reliable: true });
-      connections[partnerId] = conn;
-      setupConn(conn);
-    } else {
-      pendingConnectionIds.push(partnerId);
-    }
+    if (!partnerId) return showToast('Digite o ID');
+    addPartner(partnerId);
     addPartnerModal.classList.add('hidden');
     newPartnerInput.value = '';
-    renderContactList(); // Mostra imediatamente o nome na lista (depois será atualizado)
+    // Atualiza o campo remoteIdInput
+    const current = remoteIdInput.value.split(',').map(s => s.trim()).filter(s => s);
+    if (!current.includes(partnerId)) {
+      current.push(partnerId);
+      remoteIdInput.value = current.join(', ');
+    }
   });
 
-  // ===== CONECTAR A PARTIR DO CAMPO DE ENTRADA (se ainda usa o campo remoteIdInput) =====
-  // (Mantive a compatibilidade: pode digitar IDs separados por vírgula e clicar em Conectar)
-  const remoteIdInput = document.getElementById('remoteIdInput');
-  const connectBtn = document.getElementById('connectBtn');
-  // Esses elementos existiam na interface anterior? Não estão no HTML atual. Para evitar erros, vou verificar.
-  // Como o HTML atual não tem esses campos, não vou referenciá-los. Mas se o usuário quiser, pode adicionar.
-  // Vou remover as referências para evitar erros.
-  // A funcionalidade principal de adicionar parceiro agora é pelo botão +.
+  function setupConn(conn) {
+    conn.on('open', () => {
+      renderContactList();
+      updateStatus();
+      saveData();
+    });
+    conn.on('data', (data) => {
+      playBeep();
+      addMessageToHistory(conn.peer, { ...data, sent: false });
+    });
+    conn.on('close', () => {
+      // Não remove da lista, apenas atualiza status
+      updateStatus();
+    });
+    conn.on('error', () => updateStatus());
+  }
 
-  // Mas ele pediu para "ajeitar o que está faltando", e o erro era ao conectar usando os campos que ele tinha.
-  // Na versão anterior (a mais leve) ainda existiam os inputs de My ID e Remote ID? Na descrição do problema ele fala "coloquei o nome dela no meu e o dela, eu botei o meu nome no dela. Só que tá dando esse erro daí". Ele estava usando os campos que apareciam na tela: "Seu ID" e "IDs parceiros (vírgula)". Esses campos estavam presentes na versão que ele usou antes de eu colocar o botão flutuante e a lista. Preciso manter esses campos.
+  // ===== LISTA DE CONTATOS =====
+  function renderContactList() {
+    const ids = Object.keys(connections);
+    if (ids.length === 0) {
+      contactList.innerHTML = '<p style="color:#555; text-align:center; margin-top:80px;">Nenhum contato.</p>';
+      return;
+    }
+    contactList.innerHTML = ids.map(id => {
+      const lastMsg = chatHistory[id]?.slice(-1)[0];
+      const preview = lastMsg ? (lastMsg.type === 'text' ? lastMsg.content : (lastMsg.type === 'file' ? '📷 Mídia' : '🎤 Áudio')) : '';
+      const time = lastMsg ? new Date(lastMsg.time).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '';
+      const unread = unreadCounts[id] || 0;
+      return `<div class="contact-item" data-id="${id}">
+        <div class="avatar">${id.charAt(0).toUpperCase()}</div>
+        <div class="contact-info"><div class="contact-name">${id}</div><div class="last-msg">${preview}</div></div>
+        <div class="contact-meta"><div class="msg-time">${time}</div>${unread ? `<div class="badge">${unread}</div>` : ''}</div>
+      </div>`;
+    }).join('');
 
-  // Portanto, vou recriar a interface com a barra de conexão simplificada (campo My ID, campo Remote ID, botão Conectar) e também o botão flutuante para adicionar depois. Foi assim que estava quando ele disse que tudo funcionava. Vou restaurar exatamente aquele layout.
+    document.querySelectorAll('.contact-item').forEach(item => {
+      item.addEventListener('click', () => openChat(item.dataset.id));
+      let pressTimer;
+      item.addEventListener('touchstart', () => {
+        pressTimer = setTimeout(() => {
+          const partnerId = item.dataset.id;
+          if (confirm(`Deseja remover ${partnerId}?`)) {
+            if (connections[partnerId]) connections[partnerId].close();
+            delete connections[partnerId];
+            delete chatHistory[partnerId];
+            delete unreadCounts[partnerId];
+            if (currentPartner === partnerId) {
+              chatScreen.classList.add('hidden');
+              conversationsScreen.classList.remove('hidden');
+              currentPartner = null;
+            }
+            renderContactList();
+            updateStatus();
+            saveData();
+            showToast(`${partnerId} removido`);
+          }
+        }, 800);
+      });
+      item.addEventListener('touchend', () => clearTimeout(pressTimer));
+      item.addEventListener('touchmove', () => clearTimeout(pressTimer));
+    });
+  }
 
-  // Na verdade, a versão que ele disse "agora tá tudo funcionando" tinha a barra de conexão com os dois inputs e o botão Conectar. Depois eu mudei para o modal. Ele quer voltar para aquela. Então vou trazer de volta a barra de conexão (conn-bar) com os campos.
+  function openChat(partnerId) {
+    currentPartner = partnerId;
+    unreadCounts[partnerId] = 0;
+    chatTitle.textContent = partnerId;
+    conversationsScreen.classList.add('hidden');
+    chatScreen.classList.remove('hidden');
+    renderChatMessages();
+    messageInput.focus();
+    saveData();
+  }
 
-  // Abaixo vou reescrever o HTML incluindo a conn-bar, e ajustar a lógica para que o botão Conectar use a mesma fila de pendências.
+  function renderChatMessages() {
+    if (!currentPartner) return;
+    const msgs = chatHistory[currentPartner] || [];
+    chatMessages.innerHTML = msgs.map(m => {
+      const cls = m.sent ? 'sent' : 'received';
+      const time = new Date(m.time).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+      let content = '';
+      if (m.type === 'text') content = m.content;
+      else if (m.type === 'file') {
+        const src = m.content;
+        content = m.mime?.startsWith('image/') ? `<img src="${src}" style="max-width:200px;">` : `<video src="${src}" controls style="max-width:200px;"></video>`;
+      } else if (m.type === 'audio') content = `<audio src="${m.content}" controls style="width:180px;"></audio>`;
+      return `<div class="message ${cls}"><div>${content}</div><div class="time">${time}</div></div>`;
+    }).join('');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function addMessageToHistory(partnerId, msg) {
+    if (!chatHistory[partnerId]) chatHistory[partnerId] = [];
+    chatHistory[partnerId].push({ ...msg, time: Date.now() });
+    if (currentPartner === partnerId) {
+      renderChatMessages();
+      unreadCounts[partnerId] = 0;
+    } else {
+      unreadCounts[partnerId] = (unreadCounts[partnerId] || 0) + 1;
+    }
+    renderContactList();
+    saveData();
+  }
+
+  function sendMessage(type, content, mime) {
+    if (!currentPartner) return;
+    const conn = connections[currentPartner];
+    if (!conn || !conn.open) return alert('Desconectado');
+    const data = { type, content, mime, sender: myId };
+    conn.send(data);
+    addMessageToHistory(currentPartner, { ...data, sent: true });
+  }
+
+  // ===== ENVIO DE TEXTO =====
+  sendBtn.addEventListener('click', () => {
+    const txt = messageInput.value.trim();
+    if (!txt) return;
+    sendMessage('text', txt);
+    messageInput.value = '';
+  });
+  messageInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendBtn.click(); });
+
+  // ===== ENVIO DE MÍDIA =====
+  galleryBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => sendMessage('file', e.target.result, file.type);
+    reader.readAsDataURL(file);
+    fileInput.value = '';
+  });
+
+  // ===== ÁUDIO =====
+  micBtn.addEventListener('click', async () => {
+    if (!recording) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        mediaRecorder.ondataavailable = e => { if (e.data.size) audioChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(audioChunks, { type: 'audio/webm' });
+          const reader = new FileReader();
+          reader.onload = () => sendMessage('audio', reader.result, 'audio/webm');
+          reader.readAsDataURL(blob);
+          stream.getTracks().forEach(t => t.stop());
+        };
+        mediaRecorder.start();
+        recording = true;
+        micBtn.textContent = '⏹';
+        playBeep();
+      } catch(e) { alert('Microfone: ' + e.message); }
+    } else {
+      mediaRecorder.stop();
+      recording = false;
+      micBtn.textContent = '🎤';
+    }
+  });
+
+  // ===== CHAMADAS =====
+  async function startCall(video = false) {
+    if (!currentPartner) return;
+    const conn = connections[currentPartner];
+    if (!conn || !conn.open) return alert('Parceiro offline');
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video });
+      const call = peer.call(currentPartner, localStream, { video });
+      setupCall(call);
+    } catch(e) { alert('Erro mídia: ' + e.message); }
+  }
+  function setupCall(call) {
+    currentCall = call;
+    activeCallPanel.classList.remove('hidden');
+    callInfo.textContent = `📞 ${call.peer}`;
+    callStartTime = Date.now();
+    callTimerInterval = setInterval(() => {
+      const s = Math.floor((Date.now() - callStartTime)/1000);
+      callTimer.textContent = `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+    }, 1000);
+    hangupBtn.onclick = () => { call.close(); endCall(); };
+    call.on('close', endCall);
+    call.on('error', endCall);
+  }
+  function endCall() {
+    if (currentCall) currentCall.close();
+    if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+    clearInterval(callTimerInterval);
+    activeCallPanel.classList.add('hidden');
+    currentCall = null;
+  }
+  chatVoiceCallBtn.addEventListener('click', () => startCall(false));
+  chatVideoCallBtn.addEventListener('click', () => startCall(true));
+
+  // ===== NAVEGAÇÃO =====
+  document.querySelectorAll('.tab-item').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelector('.tab-item.active').classList.remove('active');
+      tab.classList.add('active');
+      if (tab.dataset.tab !== 'conversas') showToast('Em breve!');
+    });
+  });
+  backBtn.addEventListener('click', () => {
+    chatScreen.classList.add('hidden');
+    conversationsScreen.classList.remove('hidden');
+    currentPartner = null;
+    renderContactList();
+  });
+
+  // ===== CONFIGURAÇÕES =====
+  settingsToggle.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+  closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+
+  function applyBackground() {
+    const chatArea = document.querySelector('.chat-area');
+    if (!chatArea) return;
+    const savedColor = localStorage.getItem('chatBgColor');
+    const savedImage = localStorage.getItem('chatBgImage');
+    if (savedImage) {
+      chatArea.style.background = `url(${savedImage}) center/cover`;
+    } else if (savedColor) {
+      chatArea.style.background = savedColor;
+    } else {
+      chatArea.style.background = `#e5ddd5 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M30 30 L70 70 M70 30 L30 70" stroke="rgba(0,0,0,0.08)" stroke-width="2"/></svg>') repeat`;
+    }
+  }
+  bgColorPicker.addEventListener('input', (e) => {
+    localStorage.setItem('chatBgColor', e.target.value);
+    localStorage.removeItem('chatBgImage');
+    applyBackground();
+  });
+  bgImageInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      localStorage.setItem('chatBgImage', ev.target.result);
+      localStorage.removeItem('chatBgColor');
+      applyBackground();
+    };
+    reader.readAsDataURL(file);
+  });
+  resetBgBtn.addEventListener('click', () => {
+    localStorage.removeItem('chatBgColor');
+    localStorage.removeItem('chatBgImage');
+    applyBackground();
+  });
+
+  // ===== INÍCIO =====
+  window.addEventListener('load', initializeApp);
+  window.addEventListener('beforeunload', () => {
+    if (currentCall) currentCall.close();
+    Object.values(connections).forEach(c => c.close());
+    if (peer) peer.destroy();
+    saveData();
+  });
 </script>
 </body>
   </html>
