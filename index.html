@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Chat Zap</title>
+
+  <!-- Meta tags para PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Chat Zap">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#075e54">
+
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -14,7 +23,6 @@
       background: #121212;
       color: #e0e0e0;
     }
-    /* Container fixo que ocupa toda a tela, ignorando a barra de endereço */
     .app {
       position: fixed;
       top: 0;
@@ -239,7 +247,7 @@
     </div>
   </div>
 
-  <!-- Demais modais (chamada, adicionar parceiro, configurações) -->
+  <!-- Modais e painéis de chamada -->
   <div id="activeCallPanel" class="hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1e1e1e; padding:20px; border-radius:16px; text-align:center; z-index:30;">
     <div id="callInfo">Chamada...</div>
     <div id="callTimer" style="font-size:18px; margin:10px;">00:00</div>
@@ -665,6 +673,15 @@
     Object.values(connections).forEach(c => c.close());
     if (peer) peer.destroy();
   });
+
+  // ===== SERVICE WORKER =====
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(reg => console.log('Service Worker registrado!', reg))
+        .catch(err => console.log('Falha no Service Worker:', err));
+    });
+  }
 </script>
 </body>
-</html>
+  </html>
