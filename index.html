@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Chat Zap</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #121212;
+      color: #e0e0e0;
+    }
+    /* Container fixo que ocupa toda a tela, ignorando a barra de endereço */
+    .app {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      background: #111;
+    }
+
+    .top-bar {
+      background: #075e54;
+      color: white;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+    .top-bar h1 { flex: 1; font-size: 18px; }
+    .top-bar .icon-btn { background: none; border: none; color: white; font-size: 22px; cursor: pointer; }
+
+    .main-content {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .conversations-panel {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: #121212;
+    }
+    .contact-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .contact-item {
+      display: flex; align-items: center; padding: 12px 16px;
+      border-bottom: 1px solid #1c1c1c; cursor: pointer; transition: 0.1s; user-select: none;
+    }
+    .contact-item:active { background: #1e1e1e; }
+    .avatar {
+      width: 50px; height: 50px; border-radius: 50%; background: #4a4a4a;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; color: white; margin-right: 14px; flex-shrink: 0;
+    }
+    .contact-info { flex: 1; min-width: 0; }
+    .contact-name { font-size: 16px; color: #e0e0e0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .last-msg { font-size: 13px; color: #999; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .contact-meta { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .msg-time { font-size: 12px; color: #888; }
+    .badge {
+      background: #25d366; color: white; border-radius: 50%; width: 22px; height: 22px;
+      font-size: 12px; display: flex; align-items: center; justify-content: center;
+    }
+
+    .fab {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: #25d366;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 56px;
+      height: 56px;
+      font-size: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    .screen-chat {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .header-chat {
+      background: #075e54; color: white; padding: 10px 12px;
+      display: flex; align-items: center; gap: 12px;
+      flex-shrink: 0;
+    }
+    .back-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
+    .header-chat .contact-name { flex: 1; font-size: 17px; font-weight: 500; }
+    .chat-icons { display: flex; gap: 16px; }
+    .chat-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background: #e5ddd5 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M30 30 L70 70 M70 30 L30 70" stroke="rgba(0,0,0,0.08)" stroke-width="2"/></svg>') repeat;
+    }
+    .message {
+      max-width: 80%; padding: 7px 10px; border-radius: 8px;
+      font-size: 14px; line-height: 1.4; word-wrap: break-word;
+      position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    }
+    .message.sent { background: #dcf8c6; color: #111; align-self: flex-end; border-top-right-radius: 2px; }
+    .message.received { background: white; color: #111; align-self: flex-start; border-top-left-radius: 2px; }
+    .message .time { font-size: 10px; color: #666; text-align: right; margin-top: 4px; }
+    .message img, .message video { max-width: 200px; border-radius: 4px; margin-top: 4px; }
+    .message audio { width: 180px; margin-top: 4px; }
+
+    .input-bar {
+      background: #f0f0f0;
+      padding: 8px 12px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      border-top: 1px solid #ccc;
+      flex-shrink: 0;
+    }
+    .input-bar input {
+      flex: 1;
+      min-width: 100px;
+      border: none;
+      border-radius: 25px;
+      padding: 10px 16px;
+      outline: none;
+      font-size: 14px;
+      background: white;
+    }
+    .action-btn { background: none; border: none; font-size: 22px; cursor: pointer; color: #777; }
+
+    .tab-bar {
+      background: #1e1e1e;
+      display: flex;
+      border-top: 1px solid #333;
+      flex-shrink: 0;
+    }
+    .tab-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 0;
+      color: #888;
+      font-size: 12px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .tab-item.active { color: #25d366; }
+    .tab-item span { font-size: 20px; }
+
+    .hidden { display: none !important; }
+
+    .modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 20;
+    }
+    .modal-content {
+      background: #222; padding: 20px; border-radius: 16px; width: 90%;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .modal-content input { background: #333; border: none; color: white; padding: 10px; border-radius: 10px; outline: none; }
+    .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn { background: #25d366; border: none; color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
+    .btn-outline { background: transparent; border: 1px solid #25d366; color: #25d366; }
+
+    .toast {
+      position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%);
+      background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px;
+      z-index: 40; transition: 0.3s; opacity: 0;
+    }
+    .toast.show { opacity: 1; }
+
+    .emoji-panel {
+      display: flex; flex-wrap: wrap; gap: 8px; padding: 10px;
+      background: #f0f0f0; border-top: 1px solid #ccc;
+    }
+    .emoji-btn {
+      background: none; border: none; font-size: 24px; cursor: pointer; padding: 4px;
+    }
+  </style>
+</head>
+<body>
+<div class="app" id="appRoot">
+  <div class="top-bar">
+    <h1>Chat Zap</h1>
+    <button class="icon-btn" id="settingsToggle" title="Personalizar">⚙️</button>
+  </div>
+
+  <div class="main-content">
+    <div id="conversationsScreen" class="conversations-panel">
+      <div class="contact-list" id="contactList">
+        <p style="color:#555; text-align:center; margin-top:80px;">Nenhum contato. Toque no + para adicionar.</p>
+      </div>
+      <button class="fab" id="addContactFab">+</button>
+    </div>
+
+    <div id="chatScreen" class="screen-chat hidden">
+      <div class="header-chat">
+        <button class="back-btn" id="backBtn">←</button>
+        <span class="contact-name" id="chatTitle">Contato</span>
+        <div class="chat-icons">
+          <button class="action-btn" id="chatVoiceCallBtn" style="color:white;">📞</button>
+          <button class="action-btn" id="chatVideoCallBtn" style="color:white;">📹</button>
+        </div>
+      </div>
+      <div class="chat-area" id="chatMessages"></div>
+      <div id="emojiPanel" class="emoji-panel hidden"></div>
+      <div class="input-bar">
+        <button class="action-btn" id="cameraBtn" title="Tirar foto">📷</button>
+        <button class="action-btn" id="galleryBtn" title="Galeria">🖼️</button>
+        <input type="text" id="messageInput" placeholder="Mensagem" autocomplete="off">
+        <button class="action-btn" id="emojiBtn">😀</button>
+        <button class="action-btn" id="sendBtn">➤</button>
+        <button class="action-btn" id="micBtn">🎤</button>
+      </div>
+      <input type="file" id="fileInput" accept="image/*,video/*" class="hidden">
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
+    </div>
+  </div>
+
+  <!-- Demais modais (chamada, adicionar parceiro, configurações) -->
+  <div id="activeCallPanel" class="hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1e1e1e; padding:20px; border-radius:16px; text-align:center; z-index:30;">
+    <div id="callInfo">Chamada...</div>
+    <div id="callTimer" style="font-size:18px; margin:10px;">00:00</div>
+    <button id="hangupBtn" style="background:#e74c3c; border:none; color:white; padding:10px 20px; border-radius:20px; font-size:18px;">📴 Encerrar</button>
+  </div>
+  <div id="incomingCallPanel" class="hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1e1e1e; padding:20px; border-radius:16px; text-align:center; z-index:30;">
+    <p><span id="incomingCallerId"></span> está ligando...</p>
+    <div style="margin-top:15px;">
+      <button id="acceptCallBtn" style="background:#25d366; border:none; color:white; padding:10px 20px; border-radius:20px; margin:0 5px;">✅ Atender</button>
+      <button id="rejectCallBtn" style="background:#e74c3c; border:none; color:white; padding:10px 20px; border-radius:20px;">❌ Recusar</button>
+    </div>
+  </div>
+  <div id="addPartnerModal" class="modal hidden">
+    <div class="modal-content">
+      <h2 style="color:white;">Adicionar parceiro</h2>
+      <input type="text" id="newPartnerInput" placeholder="ID do parceiro">
+      <div class="modal-buttons">
+        <button class="btn-outline" id="cancelAddBtn">Cancelar</button>
+        <button class="btn" id="confirmAddBtn">Adicionar</button>
+      </div>
+    </div>
+  </div>
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-content">
+      <h2 style="color:white;">Personalizar fundo</h2>
+      <label style="color:#ccc;">Cor: <input type="color" id="bgColorPicker" value="#e5ddd5"></label>
+      <label style="color:#ccc;">Imagem: <input type="file" id="bgImageInput" accept="image/*"></label>
+      <div class="modal-buttons">
+        <button class="btn-outline" id="resetBgBtn">Limpar</button>
+        <button class="btn" id="closeSettingsBtn">OK</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <div class="tab-bar">
+    <div class="tab-item active" data-tab="conversas"><span>💬</span><span style="font-size:10px;">Conversas</span></div>
+    <div class="tab-item" data-tab="atualizacoes"><span>📢</span><span style="font-size:10px;">Atualizações</span></div>
+    <div class="tab-item" data-tab="comunidades"><span>👥</span><span style="font-size:10px;">Comunidades</span></div>
+    <div class="tab-item" data-tab="ligacoes"><span>📞</span><span style="font-size:10px;">Ligações</span></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+<script>
+  // ===== SOM DE BIP =====
+  function playBeep() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine'; osc.frequency.setValueAtTime(800, ctx.currentTime);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
+    } catch(e) {}
+  }
+
+  // ===== ELEMENTOS DA UI =====
+  const conversationsScreen = document.getElementById('conversationsScreen');
+  const chatScreen = document.getElementById('chatScreen');
+  const contactList = document.getElementById('contactList');
+  const chatMessages = document.getElementById('chatMessages');
+  const chatTitle = document.getElementById('chatTitle');
+  const backBtn = document.getElementById('backBtn');
+  const messageInput = document.getElementById('messageInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const cameraBtn = document.getElementById('cameraBtn');
+  const galleryBtn = document.getElementById('galleryBtn');
+  const fileInput = document.getElementById('fileInput');
+  const cameraInput = document.getElementById('cameraInput');
+  const micBtn = document.getElementById('micBtn');
+  const emojiBtn = document.getElementById('emojiBtn');
+  const emojiPanel = document.getElementById('emojiPanel');
+  const chatVoiceCallBtn = document.getElementById('chatVoiceCallBtn');
+  const chatVideoCallBtn = document.getElementById('chatVideoCallBtn');
+  const addContactFab = document.getElementById('addContactFab');
+  const addPartnerModal = document.getElementById('addPartnerModal');
+  const newPartnerInput = document.getElementById('newPartnerInput');
+  const cancelAddBtn = document.getElementById('cancelAddBtn');
+  const confirmAddBtn = document.getElementById('confirmAddBtn');
+  const activeCallPanel = document.getElementById('activeCallPanel');
+  const incomingCallPanel = document.getElementById('incomingCallPanel');
+  const callInfo = document.getElementById('callInfo');
+  const callTimer = document.getElementById('callTimer');
+  const hangupBtn = document.getElementById('hangupBtn');
+  const acceptCallBtn = document.getElementById('acceptCallBtn');
+  const rejectCallBtn = document.getElementById('rejectCallBtn');
+  const incomingCallerId = document.getElementById('incomingCallerId');
+  const settingsToggle = document.getElementById('settingsToggle');
+  const settingsModal = document.getElementById('settingsModal');
+  const bgColorPicker = document.getElementById('bgColorPicker');
+  const bgImageInput = document.getElementById('bgImageInput');
+  const resetBgBtn = document.getElementById('resetBgBtn');
+  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+  const toast = document.getElementById('toast');
+
+  // ===== VARIÁVEIS GLOBAIS =====
+  let peer, myId = '';
+  let connections = {};
+  let chatHistory = {};
+  let unreadCounts = {};
+  let currentPartner = null;
+  let mediaRecorder, audioChunks = [], recording = false;
+  let currentCall = null, localStream = null;
+  let callStartTime = null, callTimerInterval = null;
+
+  // ===== EMOJIS =====
+  const EMOJIS = ['😀','😂','❤️','😍','😭','😘','😊','🤔','😅','😢','👍','🙏','💪','🔥','✨','🎉','😱','👀','💔','😎','🤗','🤣','😋','😇','😜','😌','😈','💋','💖','💗','💘','💝','🎂','☀️','🌙','☕','🍕','🎸','⚽','🚗','✈️','🌟','🐶','🐱','🌸','🌺','🍀'];
+
+  function buildEmojiPanel() {
+    emojiPanel.innerHTML = EMOJIS.map(e => `<button class="emoji-btn">${e}</button>`).join('');
+    document.querySelectorAll('.emoji-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        messageInput.value += btn.textContent;
+        messageInput.focus();
+        emojiPanel.classList.add('hidden');
+      });
+    });
+  }
+
+  emojiBtn.addEventListener('click', () => {
+    emojiPanel.classList.toggle('hidden');
+    if (!emojiPanel.classList.contains('hidden')) buildEmojiPanel();
+  });
+
+  // ===== CÂMERA =====
+  cameraBtn.addEventListener('click', () => {
+    cameraInput.click();
+  });
+
+  cameraInput.addEventListener('change', () => {
+    const file = cameraInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => sendMessage('file', e.target.result, file.type);
+    reader.readAsDataURL(file);
+    cameraInput.value = '';
+  });
+
+  // ===== GERENCIAMENTO DE CONEXÕES E INTERFACE =====
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+
+  function initializeApp() {
+    let savedId = localStorage.getItem('p2p_myId');
+    if (!savedId) {
+      savedId = prompt('Defina seu ID (ex.: Joao):');
+      if (!savedId) return;
+      localStorage.setItem('p2p_myId', savedId);
+    }
+    myId = savedId;
+    initPeer();
+    applyBackground();
+  }
+
+  function initPeer() {
+    if (peer) peer.destroy();
+    peer = new Peer(myId, {
+      config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] }
+    });
+    peer.on('open', (id) => { myId = id; localStorage.setItem('p2p_myId', id); });
+    peer.on('connection', (conn) => {
+      if (!connections[conn.peer]) { connections[conn.peer] = conn; setupConn(conn); renderContactList(); }
+      else conn.close();
+    });
+    peer.on('call', (call) => {
+      incomingCallerId.textContent = call.peer;
+      incomingCallPanel.classList.remove('hidden');
+      acceptCallBtn.onclick = async () => {
+        try {
+          localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: call.options?.video || false });
+          call.answer(localStream);
+          setupCall(call);
+          incomingCallPanel.classList.add('hidden');
+        } catch(e) { alert('Erro mídia: ' + e.message); }
+      };
+      rejectCallBtn.onclick = () => { call.close(); incomingCallPanel.classList.add('hidden'); };
+    });
+    peer.on('error', (e) => alert('Erro: ' + e.message));
+  }
+
+  addContactFab.addEventListener('click', () => { addPartnerModal.classList.remove('hidden'); newPartnerInput.focus(); });
+  cancelAddBtn.addEventListener('click', () => addPartnerModal.classList.add('hidden'));
+  confirmAddBtn.addEventListener('click', () => {
+    const partnerId = newPartnerInput.value.trim();
+    if (!partnerId) return alert('Digite o ID');
+    if (connections[partnerId]) { alert('Já conectado'); return; }
+    const conn = peer.connect(partnerId, { reliable: true });
+    connections[partnerId] = conn;
+    setupConn(conn);
+    addPartnerModal.classList.add('hidden');
+    newPartnerInput.value = '';
+    renderContactList();
+  });
+
+  function setupConn(conn) {
+    conn.on('open', () => { renderContactList(); });
+    conn.on('data', (data) => { playBeep(); addMessageToHistory(conn.peer, { ...data, sent: false }); });
+    conn.on('close', () => { delete connections[conn.peer]; renderContactList(); });
+    conn.on('error', () => { delete connections[conn.peer]; renderContactList(); });
+  }
+
+  function renderContactList() {
+    const ids = Object.keys(connections);
+    if (ids.length === 0) {
+      contactList.innerHTML = '<p style="color:#555; text-align:center; margin-top:80px;">Nenhum contato. Toque no + para adicionar.</p>';
+      return;
+    }
+    contactList.innerHTML = ids.map(id => {
+      const lastMsg = chatHistory[id]?.slice(-1)[0];
+      const preview = lastMsg ? (lastMsg.type === 'text' ? lastMsg.content : (lastMsg.type === 'file' ? '📷 Mídia' : '🎤 Áudio')) : '';
+      const time = lastMsg ? new Date(lastMsg.time).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '';
+      const unread = unreadCounts[id] || 0;
+      return `<div class="contact-item" data-id="${id}">
+        <div class="avatar">${id.charAt(0).toUpperCase()}</div>
+        <div class="contact-info"><div class="contact-name">${id}</div><div class="last-msg">${preview}</div></div>
+        <div class="contact-meta"><div class="msg-time">${time}</div>${unread ? `<div class="badge">${unread}</div>` : ''}</div>
+      </div>`;
+    }).join('');
+
+    document.querySelectorAll('.contact-item').forEach(item => {
+      item.addEventListener('click', () => openChat(item.dataset.id));
+      let pressTimer;
+      item.addEventListener('touchstart', (e) => {
+        pressTimer = setTimeout(() => {
+          const partnerId = item.dataset.id;
+          if (confirm(`Deseja remover ${partnerId}?`)) {
+            if (connections[partnerId]) { connections[partnerId].close(); delete connections[partnerId]; }
+            delete chatHistory[partnerId];
+            delete unreadCounts[partnerId];
+            if (currentPartner === partnerId) { chatScreen.classList.add('hidden'); conversationsScreen.classList.remove('hidden'); currentPartner = null; }
+            renderContactList();
+            showToast(`${partnerId} removido`);
+          }
+        }, 800);
+      });
+      item.addEventListener('touchend', () => clearTimeout(pressTimer));
+      item.addEventListener('touchmove', () => clearTimeout(pressTimer));
+      item.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        if (confirm(`Remover ${item.dataset.id}?`)) {
+          if (connections[item.dataset.id]) { connections[item.dataset.id].close(); delete connections[item.dataset.id]; }
+          delete chatHistory[item.dataset.id];
+          delete unreadCounts[item.dataset.id];
+          if (currentPartner === item.dataset.id) { chatScreen.classList.add('hidden'); conversationsScreen.classList.remove('hidden'); currentPartner = null; }
+          renderContactList();
+        }
+      });
+    });
+  }
+
+  function openChat(partnerId) {
+    currentPartner = partnerId;
+    unreadCounts[partnerId] = 0;
+    chatTitle.textContent = partnerId;
+    conversationsScreen.classList.add('hidden');
+    chatScreen.classList.remove('hidden');
+    renderChatMessages();
+    messageInput.focus();
+  }
+
+  function renderChatMessages() {
+    if (!currentPartner) return;
+    const msgs = chatHistory[currentPartner] || [];
+    chatMessages.innerHTML = msgs.map(m => {
+      const cls = m.sent ? 'sent' : 'received';
+      const time = new Date(m.time).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+      let content = '';
+      if (m.type === 'text') content = m.content;
+      else if (m.type === 'file') {
+        const src = m.content;
+        content = m.mime?.startsWith('image/') ? `<img src="${src}" style="max-width:200px;">` : `<video src="${src}" controls style="max-width:200px;"></video>`;
+      } else if (m.type === 'audio') content = `<audio src="${m.content}" controls style="width:180px;"></audio>`;
+      return `<div class="message ${cls}"><div>${content}</div><div class="time">${time}</div></div>`;
+    }).join('');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function addMessageToHistory(partnerId, msg) {
+    if (!chatHistory[partnerId]) chatHistory[partnerId] = [];
+    chatHistory[partnerId].push({ ...msg, time: Date.now() });
+    if (currentPartner === partnerId) { renderChatMessages(); unreadCounts[partnerId] = 0; }
+    else unreadCounts[partnerId] = (unreadCounts[partnerId] || 0) + 1;
+    renderContactList();
+  }
+
+  function sendMessage(type, content, mime) {
+    if (!currentPartner) return;
+    const conn = connections[currentPartner];
+    if (!conn || !conn.open) return alert('Desconectado');
+    const data = { type, content, mime, sender: myId };
+    conn.send(data);
+    addMessageToHistory(currentPartner, { ...data, sent: true });
+    renderChatMessages();
+  }
+
+  sendBtn.addEventListener('click', () => {
+    const txt = messageInput.value.trim();
+    if (!txt) return;
+    sendMessage('text', txt);
+    messageInput.value = '';
+  });
+  messageInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendBtn.click(); });
+
+  galleryBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => sendMessage('file', e.target.result, file.type);
+    reader.readAsDataURL(file);
+    fileInput.value = '';
+  });
+
+  micBtn.addEventListener('click', async () => {
+    if (!recording) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        mediaRecorder.ondataavailable = e => { if (e.data.size) audioChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(audioChunks, { type: 'audio/webm' });
+          const reader = new FileReader();
+          reader.onload = () => sendMessage('audio', reader.result, 'audio/webm');
+          reader.readAsDataURL(blob);
+          stream.getTracks().forEach(t => t.stop());
+        };
+        mediaRecorder.start();
+        recording = true;
+        micBtn.textContent = '⏹';
+        playBeep();
+      } catch(e) { alert('Microfone: ' + e.message); }
+    } else {
+      mediaRecorder.stop();
+      recording = false;
+      micBtn.textContent = '🎤';
+    }
+  });
+
+  async function startCall(video = false) {
+    if (!currentPartner) return;
+    const conn = connections[currentPartner];
+    if (!conn || !conn.open) return alert('Parceiro offline');
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video });
+      const call = peer.call(currentPartner, localStream, { video });
+      setupCall(call);
+    } catch(e) { alert('Erro mídia: ' + e.message); }
+  }
+  function setupCall(call) {
+    currentCall = call;
+    activeCallPanel.classList.remove('hidden');
+    callInfo.textContent = `📞 ${call.peer}`;
+    callStartTime = Date.now();
+    callTimerInterval = setInterval(() => {
+      const s = Math.floor((Date.now() - callStartTime)/1000);
+      callTimer.textContent = `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+    }, 1000);
+    hangupBtn.onclick = () => { call.close(); endCall(); };
+    call.on('close', endCall);
+    call.on('error', endCall);
+  }
+  function endCall() {
+    if (currentCall) currentCall.close();
+    if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+    clearInterval(callTimerInterval);
+    activeCallPanel.classList.add('hidden');
+    currentCall = null;
+  }
+  chatVoiceCallBtn.addEventListener('click', () => startCall(false));
+  chatVideoCallBtn.addEventListener('click', () => startCall(true));
+
+  document.querySelectorAll('.tab-item').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelector('.tab-item.active').classList.remove('active');
+      tab.classList.add('active');
+      if (tab.dataset.tab !== 'conversas') showToast('Em breve!');
+    });
+  });
+
+  backBtn.addEventListener('click', () => {
+    chatScreen.classList.add('hidden');
+    conversationsScreen.classList.remove('hidden');
+    currentPartner = null;
+    renderContactList();
+  });
+
+  settingsToggle.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+  closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+
+  function applyBackground() {
+    const chatArea = document.querySelector('.chat-area');
+    if (!chatArea) return;
+    const savedColor = localStorage.getItem('chatBgColor');
+    const savedImage = localStorage.getItem('chatBgImage');
+    if (savedImage) {
+      chatArea.style.background = `url(${savedImage}) center/cover`;
+    } else if (savedColor) {
+      chatArea.style.background = savedColor;
+    } else {
+      chatArea.style.background = `#e5ddd5 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M30 30 L70 70 M70 30 L30 70" stroke="rgba(0,0,0,0.08)" stroke-width="2"/></svg>') repeat`;
+    }
+  }
+
+  bgColorPicker.addEventListener('input', (e) => { localStorage.setItem('chatBgColor', e.target.value); localStorage.removeItem('chatBgImage'); applyBackground(); });
+  bgImageInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => { localStorage.setItem('chatBgImage', ev.target.result); localStorage.removeItem('chatBgColor'); applyBackground(); };
+    reader.readAsDataURL(file);
+  });
+  resetBgBtn.addEventListener('click', () => { localStorage.removeItem('chatBgColor'); localStorage.removeItem('chatBgImage'); applyBackground(); });
+
+  window.addEventListener('load', initializeApp);
+  window.addEventListener('beforeunload', () => {
+    if (currentCall) currentCall.close();
+    Object.values(connections).forEach(c => c.close());
+    if (peer) peer.destroy();
+  });
+</script>
+</body>
+</html>
