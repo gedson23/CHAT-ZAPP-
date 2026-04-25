@@ -33,9 +33,53 @@
       align-items: center;
       gap: 12px;
       font-weight: 500;
+      flex-shrink: 0;
     }
     .top-bar h1 { flex: 1; font-size: 18px; }
     .top-bar .icon-btn { background: none; border: none; color: white; font-size: 22px; cursor: pointer; }
+
+    .conn-bar {
+      background: #1f2c33;
+      padding: 8px 12px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+      border-bottom: 1px solid #222;
+      flex-shrink: 0;
+    }
+    .conn-bar input {
+      flex: 1;
+      min-width: 100px;
+      background: #2a3942;
+      border: none;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      outline: none;
+      font-size: 13px;
+    }
+    .conn-bar input::placeholder { color: #888; }
+    .btn {
+      background: #25d366;
+      border: none;
+      color: white;
+      border-radius: 20px;
+      padding: 8px 14px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .btn-outline { background: transparent; border: 1px solid #25d366; color: #25d366; }
+    .status-badge {
+      background: #2a3942;
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 11px;
+      color: #ccc;
+    }
+    .connected { color: #25d366; }
+    .disconnected { color: #ff6b6b; }
 
     .main-content { flex: 1; overflow: hidden; position: relative; }
 
@@ -105,49 +149,6 @@
     .message img, .message video { max-width: 200px; border-radius: 4px; margin-top: 4px; }
     .message audio { width: 180px; margin-top: 4px; }
 
-    .conn-bar {
-      background: #1f2c33;
-      padding: 8px 12px;
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      align-items: center;
-      border-bottom: 1px solid #222;
-      flex-shrink: 0;
-    }
-    .conn-bar input {
-      flex: 1;
-      min-width: 100px;
-      background: #2a3942;
-      border: none;
-      color: white;
-      padding: 8px 12px;
-      border-radius: 20px;
-      outline: none;
-      font-size: 13px;
-    }
-    .conn-bar input::placeholder { color: #888; }
-    .btn {
-      background: #25d366;
-      border: none;
-      color: white;
-      border-radius: 20px;
-      padding: 8px 14px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 13px;
-    }
-    .btn-outline { background: transparent; border: 1px solid #25d366; color: #25d366; }
-    .status-badge {
-      background: #2a3942;
-      border-radius: 20px;
-      padding: 4px 10px;
-      font-size: 11px;
-      color: #ccc;
-    }
-    .connected { color: #25d366; }
-    .disconnected { color: #ff6b6b; }
-
     .input-bar {
       background: #f0f0f0; padding: 8px 12px; display: flex; gap: 6px;
       align-items: center; border-top: 1px solid #ccc; flex-shrink: 0;
@@ -178,8 +179,6 @@
     }
     .modal-content input { background: #333; border: none; color: white; padding: 10px; border-radius: 10px; outline: none; }
     .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
-    .btn { background: #25d366; border: none; color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
-    .btn-outline { background: transparent; border: 1px solid #25d366; color: #25d366; }
 
     .toast {
       position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%);
@@ -197,12 +196,13 @@
 </head>
 <body>
 <div class="app" id="appRoot">
+  <!-- Cabeçalho -->
   <div class="top-bar">
     <h1>Chat Zap</h1>
-    <button class="icon-btn" id="settingsToggle" title="Personalizar">⚙️</button>
+    <button class="icon-btn" id="settingsToggle">⚙️</button>
   </div>
 
-  <!-- Barra de conexão (sempre visível) -->
+  <!-- Barra de conexão -->
   <div class="conn-bar">
     <input type="text" id="myIdInput" placeholder="Seu ID" value="">
     <input type="text" id="remoteIdInput" placeholder="IDs parceiros (vírgula)" value="">
@@ -210,7 +210,9 @@
     <span id="connectionStatus" class="status-badge disconnected">Off</span>
   </div>
 
+  <!-- Conteúdo principal -->
   <div class="main-content">
+    <!-- Lista de conversas -->
     <div id="conversationsScreen" class="conversations-panel">
       <div class="contact-list" id="contactList">
         <p style="color:#555; text-align:center; margin-top:80px;">Nenhum contato.</p>
@@ -218,6 +220,7 @@
       <button class="fab" id="addContactFab">+</button>
     </div>
 
+    <!-- Tela de conversa individual -->
     <div id="chatScreen" class="screen-chat hidden">
       <div class="header-chat">
         <button class="back-btn" id="backBtn">←</button>
@@ -230,8 +233,8 @@
       <div class="chat-area" id="chatMessages"></div>
       <div id="emojiPanel" class="emoji-panel hidden"></div>
       <div class="input-bar">
-        <button class="action-btn" id="cameraBtn" title="Tirar foto">📷</button>
-        <button class="action-btn" id="galleryBtn" title="Galeria">🖼️</button>
+        <button class="action-btn" id="cameraBtn">📷</button>
+        <button class="action-btn" id="galleryBtn">🖼️</button>
         <input type="text" id="messageInput" placeholder="Mensagem" autocomplete="off">
         <button class="action-btn" id="emojiBtn">😀</button>
         <button class="action-btn" id="sendBtn">➤</button>
@@ -242,18 +245,16 @@
     </div>
   </div>
 
-  <!-- Modais (chamada, adicionar parceiro, configurações) -->
+  <!-- Modais -->
   <div id="activeCallPanel" class="hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1e1e1e; padding:20px; border-radius:16px; text-align:center; z-index:30;">
     <div id="callInfo">Chamada...</div>
     <div id="callTimer" style="font-size:18px; margin:10px;">00:00</div>
-    <button id="hangupBtn" style="background:#e74c3c; border:none; color:white; padding:10px 20px; border-radius:20px; font-size:18px;">📴 Encerrar</button>
+    <button id="hangupBtn" style="background:#e74c3c; border:none; color:white; padding:10px 20px; border-radius:20px;">📴 Encerrar</button>
   </div>
   <div id="incomingCallPanel" class="hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1e1e1e; padding:20px; border-radius:16px; text-align:center; z-index:30;">
     <p><span id="incomingCallerId"></span> está ligando...</p>
-    <div style="margin-top:15px;">
-      <button id="acceptCallBtn" style="background:#25d366; border:none; color:white; padding:10px 20px; border-radius:20px; margin:0 5px;">✅ Atender</button>
-      <button id="rejectCallBtn" style="background:#e74c3c; border:none; color:white; padding:10px 20px; border-radius:20px;">❌ Recusar</button>
-    </div>
+    <button id="acceptCallBtn" style="background:#25d366; border:none; color:white; padding:10px 20px; border-radius:20px; margin:5px;">✅ Atender</button>
+    <button id="rejectCallBtn" style="background:#e74c3c; border:none; color:white; padding:10px 20px; border-radius:20px;">❌ Recusar</button>
   </div>
   <div id="addPartnerModal" class="modal hidden">
     <div class="modal-content">
@@ -278,6 +279,7 @@
   </div>
   <div class="toast" id="toast"></div>
 
+  <!-- Abas inferiores -->
   <div class="tab-bar">
     <div class="tab-item active" data-tab="conversas"><span>💬</span><span style="font-size:10px;">Conversas</span></div>
     <div class="tab-item" data-tab="atualizacoes"><span>📢</span><span style="font-size:10px;">Atualizações</span></div>
@@ -301,54 +303,55 @@
     } catch(e) {}
   }
 
-  // ===== ELEMENTOS DA UI =====
-  const conversationsScreen = document.getElementById('conversationsScreen');
-  const chatScreen = document.getElementById('chatScreen');
-  const contactList = document.getElementById('contactList');
-  const chatMessages = document.getElementById('chatMessages');
-  const chatTitle = document.getElementById('chatTitle');
-  const backBtn = document.getElementById('backBtn');
-  const messageInput = document.getElementById('messageInput');
-  const sendBtn = document.getElementById('sendBtn');
-  const cameraBtn = document.getElementById('cameraBtn');
-  const galleryBtn = document.getElementById('galleryBtn');
-  const fileInput = document.getElementById('fileInput');
-  const cameraInput = document.getElementById('cameraInput');
-  const micBtn = document.getElementById('micBtn');
-  const emojiBtn = document.getElementById('emojiBtn');
-  const emojiPanel = document.getElementById('emojiPanel');
-  const chatVoiceCallBtn = document.getElementById('chatVoiceCallBtn');
-  const chatVideoCallBtn = document.getElementById('chatVideoCallBtn');
-  const addContactFab = document.getElementById('addContactFab');
-  const addPartnerModal = document.getElementById('addPartnerModal');
-  const newPartnerInput = document.getElementById('newPartnerInput');
-  const cancelAddBtn = document.getElementById('cancelAddBtn');
-  const confirmAddBtn = document.getElementById('confirmAddBtn');
-  const activeCallPanel = document.getElementById('activeCallPanel');
-  const incomingCallPanel = document.getElementById('incomingCallPanel');
-  const callInfo = document.getElementById('callInfo');
-  const callTimer = document.getElementById('callTimer');
-  const hangupBtn = document.getElementById('hangupBtn');
-  const acceptCallBtn = document.getElementById('acceptCallBtn');
-  const rejectCallBtn = document.getElementById('rejectCallBtn');
-  const incomingCallerId = document.getElementById('incomingCallerId');
-  const settingsToggle = document.getElementById('settingsToggle');
-  const settingsModal = document.getElementById('settingsModal');
-  const bgColorPicker = document.getElementById('bgColorPicker');
-  const bgImageInput = document.getElementById('bgImageInput');
-  const resetBgBtn = document.getElementById('resetBgBtn');
-  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
-  const toast = document.getElementById('toast');
-  const myIdInput = document.getElementById('myIdInput');
-  const remoteIdInput = document.getElementById('remoteIdInput');
-  const connectBtn = document.getElementById('connectBtn');
-  const connectionStatus = document.getElementById('connectionStatus');
+  // ===== ELEMENTOS =====
+  const $ = (id) => document.getElementById(id);
+  const conversationsScreen = $('conversationsScreen');
+  const chatScreen = $('chatScreen');
+  const contactList = $('contactList');
+  const chatMessages = $('chatMessages');
+  const chatTitle = $('chatTitle');
+  const backBtn = $('backBtn');
+  const messageInput = $('messageInput');
+  const sendBtn = $('sendBtn');
+  const cameraBtn = $('cameraBtn');
+  const galleryBtn = $('galleryBtn');
+  const fileInput = $('fileInput');
+  const cameraInput = $('cameraInput');
+  const micBtn = $('micBtn');
+  const emojiBtn = $('emojiBtn');
+  const emojiPanel = $('emojiPanel');
+  const chatVoiceCallBtn = $('chatVoiceCallBtn');
+  const chatVideoCallBtn = $('chatVideoCallBtn');
+  const addContactFab = $('addContactFab');
+  const addPartnerModal = $('addPartnerModal');
+  const newPartnerInput = $('newPartnerInput');
+  const cancelAddBtn = $('cancelAddBtn');
+  const confirmAddBtn = $('confirmAddBtn');
+  const activeCallPanel = $('activeCallPanel');
+  const incomingCallPanel = $('incomingCallPanel');
+  const callInfo = $('callInfo');
+  const callTimer = $('callTimer');
+  const hangupBtn = $('hangupBtn');
+  const acceptCallBtn = $('acceptCallBtn');
+  const rejectCallBtn = $('rejectCallBtn');
+  const incomingCallerId = $('incomingCallerId');
+  const settingsToggle = $('settingsToggle');
+  const settingsModal = $('settingsModal');
+  const bgColorPicker = $('bgColorPicker');
+  const bgImageInput = $('bgImageInput');
+  const resetBgBtn = $('resetBgBtn');
+  const closeSettingsBtn = $('closeSettingsBtn');
+  const toast = $('toast');
+  const myIdInput = $('myIdInput');
+  const remoteIdInput = $('remoteIdInput');
+  const connectBtn = $('connectBtn');
+  const connectionStatus = $('connectionStatus');
 
-  // ===== VARIÁVEIS GLOBAIS =====
+  // ===== VARIÁVEIS =====
   let peer, myId = '';
   let connections = {};
-  let chatHistory = {};       // { partnerId: [ { type, content, time, sent } ] }
-  let unreadCounts = {};      // { partnerId: number }
+  let chatHistory = {};
+  let unreadCounts = {};
   let currentPartner = null;
   let mediaRecorder, audioChunks = [], recording = false;
   let currentCall = null, localStream = null;
@@ -356,7 +359,6 @@
 
   // ===== EMOJIS =====
   const EMOJIS = ['😀','😂','❤️','😍','😭','😘','😊','🤔','😅','😢','👍','🙏','💪','🔥','✨','🎉','😱','👀','💔','😎','🤗','🤣','😋','😇','😜','😌','😈','💋','💖','💗','💘','💝','🎂','☀️','🌙','☕','🍕','🎸','⚽','🚗','✈️','🌟','🐶','🐱','🌸','🌺','🍀'];
-
   function buildEmojiPanel() {
     emojiPanel.innerHTML = EMOJIS.map(e => `<button class="emoji-btn">${e}</button>`).join('');
     document.querySelectorAll('.emoji-btn').forEach(btn => {
@@ -383,62 +385,31 @@
     cameraInput.value = '';
   });
 
-  // ===== PERSISTÊNCIA (LocalStorage) =====
+  // ===== PERSISTÊNCIA =====
   function saveData() {
     localStorage.setItem('p2p_chatHistory', JSON.stringify(chatHistory));
     localStorage.setItem('p2p_unreadCounts', JSON.stringify(unreadCounts));
     localStorage.setItem('p2p_partners', JSON.stringify(Object.keys(connections)));
+    localStorage.setItem('p2p_remoteIds', remoteIdInput.value);
   }
-
   function loadData() {
     try {
-      const savedHistory = localStorage.getItem('p2p_chatHistory');
-      if (savedHistory) chatHistory = JSON.parse(savedHistory);
-      const savedUnread = localStorage.getItem('p2p_unreadCounts');
-      if (savedUnread) unreadCounts = JSON.parse(savedUnread);
+      chatHistory = JSON.parse(localStorage.getItem('p2p_chatHistory') || '{}');
+      unreadCounts = JSON.parse(localStorage.getItem('p2p_unreadCounts') || '{}');
+      remoteIdInput.value = localStorage.getItem('p2p_remoteIds') || '';
     } catch(e) {}
   }
 
-  // ===== FUNÇÕES DE CONEXÃO =====
+  // ===== CONEXÕES =====
   function showToast(msg) {
     toast.textContent = msg;
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 2000);
   }
-
   function updateStatus() {
-    const count = Object.keys(connections).length;
-    connectionStatus.textContent = count ? `${count} online` : 'Off';
-    connectionStatus.className = `status-badge ${count ? 'connected' : 'disconnected'}`;
-  }
-
-  function initializeApp() {
-    loadData();
-    let savedId = localStorage.getItem('p2p_myId');
-    if (savedId) {
-      myIdInput.value = savedId;
-      myId = savedId;
-      initPeer();
-      applyBackground();
-      // Tentar reconectar aos parceiros salvos
-      const savedPartners = JSON.parse(localStorage.getItem('p2p_partners') || '[]');
-      if (savedPartners.length > 0) {
-        remoteIdInput.value = savedPartners.join(', ');
-        // Reconectar em cascata
-        setTimeout(() => {
-          savedPartners.forEach(id => addPartner(id));
-        }, 1500);
-      }
-    } else {
-      // Primeira visita: pedir ID
-      savedId = prompt('Defina seu ID (ex.: Joao):');
-      if (!savedId) return;
-      myIdInput.value = savedId;
-      myId = savedId;
-      localStorage.setItem('p2p_myId', savedId);
-      initPeer();
-      applyBackground();
-    }
+    const cnt = Object.keys(connections).length;
+    connectionStatus.textContent = cnt ? `${cnt} online` : 'Off';
+    connectionStatus.className = `status-badge ${cnt ? 'connected' : 'disconnected'}`;
   }
 
   function initPeer() {
@@ -451,6 +422,9 @@
       connectionStatus.textContent = `ID: ${id}`;
       connectionStatus.className = 'status-badge connected';
       localStorage.setItem('p2p_myId', id);
+      // reconectar automaticamente aos parceiros salvos
+      const savedPartners = JSON.parse(localStorage.getItem('p2p_partners') || '[]');
+      savedPartners.forEach(pid => addPartner(pid));
     });
     peer.on('connection', (conn) => {
       if (!connections[conn.peer]) {
@@ -470,17 +444,16 @@
           call.answer(localStream);
           setupCall(call);
           incomingCallPanel.classList.add('hidden');
-        } catch(e) { alert('Erro mídia: ' + e.message); }
+        } catch(e) { alert('Erro ao acessar mídia: ' + e.message); }
       };
       rejectCallBtn.onclick = () => { call.close(); incomingCallPanel.classList.add('hidden'); };
     });
-    peer.on('error', (e) => console.error(e));
+    peer.on('error', (e) => showToast('Erro: ' + e.message));
   }
 
   function addPartner(partnerId) {
-    if (connections[partnerId]) return;
+    if (!partnerId || connections[partnerId]) return;
     if (!peer || !peer.id) {
-      // Peer ainda não abriu – agendar para depois
       setTimeout(() => addPartner(partnerId), 1000);
       return;
     }
@@ -492,53 +465,17 @@
     saveData();
   }
 
-  // Conectar via botão "Conectar" (usa o campo remoteIdInput)
-  connectBtn.addEventListener('click', () => {
-    const remotes = remoteIdInput.value.split(',').map(s => s.trim()).filter(s => s);
-    if (!remotes.length) return showToast('Digite pelo menos um ID');
-    if (!peer || !peer.id) {
-      showToast('Aguardando registro do ID...');
-      return;
-    }
-    remotes.forEach(id => addPartner(id));
-    localStorage.setItem('p2p_partners', JSON.stringify(Object.keys(connections)));
-  });
-
-  // Conectar via botão flutuante "+" (abre modal)
-  addContactFab.addEventListener('click', () => addPartnerModal.classList.remove('hidden'));
-  cancelAddBtn.addEventListener('click', () => addPartnerModal.classList.add('hidden'));
-  confirmAddBtn.addEventListener('click', () => {
-    const partnerId = newPartnerInput.value.trim();
-    if (!partnerId) return showToast('Digite o ID');
-    addPartner(partnerId);
-    addPartnerModal.classList.add('hidden');
-    newPartnerInput.value = '';
-    // Atualiza o campo remoteIdInput
-    const current = remoteIdInput.value.split(',').map(s => s.trim()).filter(s => s);
-    if (!current.includes(partnerId)) {
-      current.push(partnerId);
-      remoteIdInput.value = current.join(', ');
-    }
-  });
-
   function setupConn(conn) {
-    conn.on('open', () => {
-      renderContactList();
-      updateStatus();
-      saveData();
-    });
+    conn.on('open', () => { renderContactList(); updateStatus(); saveData(); });
     conn.on('data', (data) => {
       playBeep();
       addMessageToHistory(conn.peer, { ...data, sent: false });
     });
-    conn.on('close', () => {
-      // Não remove da lista, apenas atualiza status
-      updateStatus();
-    });
-    conn.on('error', () => updateStatus());
+    conn.on('close', () => { updateStatus(); });
+    conn.on('error', () => { updateStatus(); });
   }
 
-  // ===== LISTA DE CONTATOS =====
+  // ===== INTERFACE DE CONTATOS =====
   function renderContactList() {
     const ids = Object.keys(connections);
     if (ids.length === 0) {
@@ -559,16 +496,17 @@
 
     document.querySelectorAll('.contact-item').forEach(item => {
       item.addEventListener('click', () => openChat(item.dataset.id));
-      let pressTimer;
+      // remover com toque longo
+      let timer;
       item.addEventListener('touchstart', () => {
-        pressTimer = setTimeout(() => {
-          const partnerId = item.dataset.id;
-          if (confirm(`Deseja remover ${partnerId}?`)) {
-            if (connections[partnerId]) connections[partnerId].close();
-            delete connections[partnerId];
-            delete chatHistory[partnerId];
-            delete unreadCounts[partnerId];
-            if (currentPartner === partnerId) {
+        timer = setTimeout(() => {
+          const pid = item.dataset.id;
+          if (confirm(`Remover ${pid}?`)) {
+            if (connections[pid]) connections[pid].close();
+            delete connections[pid];
+            delete chatHistory[pid];
+            delete unreadCounts[pid];
+            if (currentPartner === pid) {
               chatScreen.classList.add('hidden');
               conversationsScreen.classList.remove('hidden');
               currentPartner = null;
@@ -576,12 +514,11 @@
             renderContactList();
             updateStatus();
             saveData();
-            showToast(`${partnerId} removido`);
           }
         }, 800);
       });
-      item.addEventListener('touchend', () => clearTimeout(pressTimer));
-      item.addEventListener('touchmove', () => clearTimeout(pressTimer));
+      item.addEventListener('touchend', () => clearTimeout(timer));
+      item.addEventListener('touchmove', () => clearTimeout(timer));
     });
   }
 
@@ -605,8 +542,7 @@
       let content = '';
       if (m.type === 'text') content = m.content;
       else if (m.type === 'file') {
-        const src = m.content;
-        content = m.mime?.startsWith('image/') ? `<img src="${src}" style="max-width:200px;">` : `<video src="${src}" controls style="max-width:200px;"></video>`;
+        content = m.mime?.startsWith('image/') ? `<img src="${m.content}" style="max-width:200px;">` : `<video src="${m.content}" controls style="max-width:200px;"></video>`;
       } else if (m.type === 'audio') content = `<audio src="${m.content}" controls style="width:180px;"></audio>`;
       return `<div class="message ${cls}"><div>${content}</div><div class="time">${time}</div></div>`;
     }).join('');
@@ -629,22 +565,20 @@
   function sendMessage(type, content, mime) {
     if (!currentPartner) return;
     const conn = connections[currentPartner];
-    if (!conn || !conn.open) return alert('Desconectado');
+    if (!conn || !conn.open) return showToast('Desconectado');
     const data = { type, content, mime, sender: myId };
     conn.send(data);
     addMessageToHistory(currentPartner, { ...data, sent: true });
   }
 
-  // ===== ENVIO DE TEXTO =====
+  // ===== ENVIO DE TEXTO E ARQUIVOS =====
   sendBtn.addEventListener('click', () => {
-    const txt = messageInput.value.trim();
-    if (!txt) return;
-    sendMessage('text', txt);
+    if (!messageInput.value.trim()) return;
+    sendMessage('text', messageInput.value.trim());
     messageInput.value = '';
   });
   messageInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendBtn.click(); });
 
-  // ===== ENVIO DE MÍDIA =====
   galleryBtn.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', () => {
     const file = fileInput.files[0];
@@ -655,7 +589,6 @@
     fileInput.value = '';
   });
 
-  // ===== ÁUDIO =====
   micBtn.addEventListener('click', async () => {
     if (!recording) {
       try {
@@ -674,7 +607,7 @@
         recording = true;
         micBtn.textContent = '⏹';
         playBeep();
-      } catch(e) { alert('Microfone: ' + e.message); }
+      } catch(e) { showToast('Microfone negado'); }
     } else {
       mediaRecorder.stop();
       recording = false;
@@ -686,12 +619,12 @@
   async function startCall(video = false) {
     if (!currentPartner) return;
     const conn = connections[currentPartner];
-    if (!conn || !conn.open) return alert('Parceiro offline');
+    if (!conn || !conn.open) return showToast('Parceiro offline');
     try {
       localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video });
       const call = peer.call(currentPartner, localStream, { video });
       setupCall(call);
-    } catch(e) { alert('Erro mídia: ' + e.message); }
+    } catch(e) { showToast('Erro ao iniciar chamada'); }
   }
   function setupCall(call) {
     currentCall = call;
@@ -716,7 +649,7 @@
   chatVoiceCallBtn.addEventListener('click', () => startCall(false));
   chatVideoCallBtn.addEventListener('click', () => startCall(true));
 
-  // ===== NAVEGAÇÃO =====
+  // ===== ABAS E BACK =====
   document.querySelectorAll('.tab-item').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelector('.tab-item.active').classList.remove('active');
@@ -731,10 +664,33 @@
     renderContactList();
   });
 
+  // ===== ADICIONAR PARCEIRO =====
+  connectBtn.addEventListener('click', () => {
+    const remotes = remoteIdInput.value.split(',').map(s => s.trim()).filter(s => s);
+    if (!remotes.length) return showToast('Digite ao menos um ID');
+    if (!peer || !peer.id) return showToast('Aguardando registro...');
+    remotes.forEach(id => addPartner(id));
+    localStorage.setItem('p2p_partners', JSON.stringify(Object.keys(connections)));
+  });
+  addContactFab.addEventListener('click', () => addPartnerModal.classList.remove('hidden'));
+  cancelAddBtn.addEventListener('click', () => addPartnerModal.classList.add('hidden'));
+  confirmAddBtn.addEventListener('click', () => {
+    const pid = newPartnerInput.value.trim();
+    if (!pid) return;
+    addPartner(pid);
+    addPartnerModal.classList.add('hidden');
+    newPartnerInput.value = '';
+    // atualiza campo texto
+    const current = remoteIdInput.value.split(',').map(s => s.trim()).filter(s => s);
+    if (!current.includes(pid)) {
+      current.push(pid);
+      remoteIdInput.value = current.join(',');
+    }
+  });
+
   // ===== CONFIGURAÇÕES =====
   settingsToggle.addEventListener('click', () => settingsModal.classList.remove('hidden'));
   closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
-
   function applyBackground() {
     const chatArea = document.querySelector('.chat-area');
     if (!chatArea) return;
@@ -754,24 +710,33 @@
     applyBackground();
   });
   bgImageInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const file = e.target.files[0]; if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      localStorage.setItem('chatBgImage', ev.target.result);
-      localStorage.removeItem('chatBgColor');
-      applyBackground();
-    };
+    reader.onload = (ev) => { localStorage.setItem('chatBgImage', ev.target.result); localStorage.removeItem('chatBgColor'); applyBackground(); };
     reader.readAsDataURL(file);
   });
-  resetBgBtn.addEventListener('click', () => {
-    localStorage.removeItem('chatBgColor');
-    localStorage.removeItem('chatBgImage');
-    applyBackground();
-  });
+  resetBgBtn.addEventListener('click', () => { localStorage.removeItem('chatBgColor'); localStorage.removeItem('chatBgImage'); applyBackground(); });
 
-  // ===== INÍCIO =====
-  window.addEventListener('load', initializeApp);
+  // ===== INICIAR APLICATIVO =====
+  window.addEventListener('load', () => {
+    loadData();
+    let savedId = localStorage.getItem('p2p_myId');
+    if (savedId) {
+      myId = savedId;
+      myIdInput.value = myId;
+      initPeer();
+      applyBackground();
+    } else {
+      // primeira vez: solicita ID
+      const newId = prompt('Defina seu ID (ex.: Joao):');
+      if (!newId) return;
+      myId = newId;
+      myIdInput.value = myId;
+      localStorage.setItem('p2p_myId', myId);
+      initPeer();
+      applyBackground();
+    }
+  });
   window.addEventListener('beforeunload', () => {
     if (currentCall) currentCall.close();
     Object.values(connections).forEach(c => c.close());
