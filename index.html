@@ -197,11 +197,8 @@
     .emoji-btn {
       background: none; border: none; font-size: 24px; cursor: pointer; padding: 4px;
     }
-    .status-off {
-      color: #ff6b6b;
-      font-size: 11px;
-      margin-left: 4px;
-    }
+    .status-on { color: #25d366; font-size: 12px; margin-left: 6px; }
+    .status-off { color: #ff6b6b; font-size: 12px; margin-left: 6px; }
   </style>
 </head>
 <body>
@@ -243,18 +240,16 @@
     </div>
   </div>
 
-  <!-- Modais (chamada, adicionar parceiro, configurações) -->
+  <!-- Modais -->
   <div id="activeCallPanel" class="hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1e1e1e; padding:20px; border-radius:16px; text-align:center; z-index:30;">
     <div id="callInfo">Chamada...</div>
     <div id="callTimer" style="font-size:18px; margin:10px;">00:00</div>
-    <button id="hangupBtn" style="background:#e74c3c; border:none; color:white; padding:10px 20px; border-radius:20px; font-size:18px;">📴 Encerrar</button>
+    <button id="hangupBtn" style="background:#e74c3c; border:none; color:white; padding:10px 20px; border-radius:20px;">📴 Encerrar</button>
   </div>
   <div id="incomingCallPanel" class="hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1e1e1e; padding:20px; border-radius:16px; text-align:center; z-index:30;">
     <p><span id="incomingCallerId"></span> está ligando...</p>
-    <div style="margin-top:15px;">
-      <button id="acceptCallBtn" style="background:#25d366; border:none; color:white; padding:10px 20px; border-radius:20px; margin:0 5px;">✅ Atender</button>
-      <button id="rejectCallBtn" style="background:#e74c3c; border:none; color:white; padding:10px 20px; border-radius:20px;">❌ Recusar</button>
-    </div>
+    <button id="acceptCallBtn" style="background:#25d366; border:none; color:white; padding:10px 20px; border-radius:20px; margin:5px;">✅ Atender</button>
+    <button id="rejectCallBtn" style="background:#e74c3c; border:none; color:white; padding:10px 20px; border-radius:20px;">❌ Recusar</button>
   </div>
   <div id="addPartnerModal" class="modal hidden">
     <div class="modal-content">
@@ -352,9 +347,22 @@
   let currentCall = null, localStream = null;
   let callStartTime = null, callTimerInterval = null;
 
+  // ===== PERSISTÊNCIA =====
+  function saveData() {
+    localStorage.setItem('p2p_chatHistory', JSON.stringify(chatHistory));
+    localStorage.setItem('p2p_unreadCounts', JSON.stringify(unreadCounts));
+    localStorage.setItem('p2p_savedPartners', JSON.stringify(Object.keys(connections)));
+  }
+
+  function loadData() {
+    try {
+      chatHistory = JSON.parse(localStorage.getItem('p2p_chatHistory') || '{}');
+      unreadCounts = JSON.parse(localStorage.getItem('p2p_unreadCounts') || '{}');
+    } catch(e) {}
+  }
+
   // ===== EMOJIS =====
   const EMOJIS = ['😀','😂','❤️','😍','😭','😘','😊','🤔','😅','😢','👍','🙏','💪','🔥','✨','🎉','😱','👀','💔','😎','🤗','🤣','😋','😇','😜','😌','😈','💋','💖','💗','💘','💝','🎂','☀️','🌙','☕','🍕','🎸','⚽','🚗','✈️','🌟','🐶','🐱','🌸','🌺','🍀'];
-
   function buildEmojiPanel() {
     emojiPanel.innerHTML = EMOJIS.map(e => `<button class="emoji-btn">${e}</button>`).join('');
     document.querySelectorAll('.emoji-btn').forEach(btn => {
@@ -365,17 +373,13 @@
       });
     });
   }
-
   emojiBtn.addEventListener('click', () => {
     emojiPanel.classList.toggle('hidden');
     if (!emojiPanel.classList.contains('hidden')) buildEmojiPanel();
   });
 
   // ===== CÂMERA =====
-  cameraBtn.addEventListener('click', () => {
-    cameraInput.click();
-  });
-
+  cameraBtn.addEventListener('click', () => cameraInput.click());
   cameraInput.addEventListener('change', () => {
     const file = cameraInput.files[0];
     if (!file) return;
@@ -385,25 +389,7 @@
     cameraInput.value = '';
   });
 
-  // ===== PERSISTÊNCIA (Salvar e Carregar) =====
-  function saveData() {
-    localStorage.setItem('p2p_chatHistory', JSON.stringify(chatHistory));
-    localStorage.setItem('p2p_unreadCounts', JSON.stringify(unreadCounts));
-    // Salva IDs dos parceiros que já foram adicionados
-    const savedPartners = JSON.parse(localStorage.getItem('p2p_savedPartners') || '[]');
-    const allIds = Object.keys(connections);
-    const merged = [...new Set([...savedPartners, ...allIds])];
-    localStorage.setItem('p2p_savedPartners', JSON.stringify(merged));
-  }
-
-  function loadData() {
-    try {
-      chatHistory = JSON.parse(localStorage.getItem('p2p_chatHistory') || '{}');
-      unreadCounts = JSON.parse(localStorage.getItem('p2p_unreadCounts') || '{}');
-    } catch(e) {}
-  }
-
-  // ===== CONEXÕES (REVISADAS) =====
+  // ===== CONEXÃO (SIMPLES) =====
   function showToast(msg) {
     toast.textContent = msg;
     toast.classList.add('show');
@@ -431,23 +417,19 @@
 
     peer.on('open', (id) => {
       myId = id;
+      console.log('Meu ID:', id);
       localStorage.setItem('p2p_myId', id);
-      console.log('Peer aberto, meu ID:', id);
-      // Reconectar automaticamente aos parceiros salvos
-      reconnectSavedPartners();
+      // Restaura os contatos salvos (apenas exibe, sem forçar reconexão)
+      renderContactList();
     });
 
     peer.on('connection', (incomingConn) => {
       const partnerId = incomingConn.peer;
-      console.log('Conexão recebida de:', partnerId);
-      // Se já existe uma conexão aberta com esse parceiro, ignore a nova
-      if (connections[partnerId] && connections[partnerId].open) {
+      console.log('Recebendo conexão de:', partnerId);
+      // Se já existe uma conexão com esse parceiro, fecha a nova (mantém a existente)
+      if (connections[partnerId]) {
         incomingConn.close();
         return;
-      }
-      // Se existe uma conexão pendente (não aberta), feche a pendente e fique com a nova
-      if (connections[partnerId]) {
-        connections[partnerId].close();
       }
       connections[partnerId] = incomingConn;
       setupConn(incomingConn);
@@ -464,7 +446,7 @@
           call.answer(localStream);
           setupCall(call);
           incomingCallPanel.classList.add('hidden');
-        } catch(e) { alert('Erro mídia: ' + e.message); }
+        } catch(e) { alert('Erro ao acessar mídia: ' + e.message); }
       };
       rejectCallBtn.onclick = () => { call.close(); incomingCallPanel.classList.add('hidden'); };
     });
@@ -472,52 +454,26 @@
     peer.on('error', (e) => showToast('Erro Peer: ' + e.message));
   }
 
-  function reconnectSavedPartners() {
-    if (!peer || !peer.id) {
-      setTimeout(reconnectSavedPartners, 800);
-      return;
-    }
-    const savedPartners = JSON.parse(localStorage.getItem('p2p_savedPartners') || '[]');
-    savedPartners.forEach(partnerId => {
-      // Só tenta conectar se não houver nenhuma conexão (aberta ou pendente)
-      if (!connections[partnerId]) {
-        console.log('Reconectando a', partnerId);
-        const conn = peer.connect(partnerId, { reliable: true });
-        connections[partnerId] = conn;
-        setupConn(conn);
-      }
-    });
-    renderContactList();
-  }
-
   function addPartner(partnerId) {
-    if (!partnerId) return;
-    // Se já existe uma conexão (aberta ou pendente), não faz nada
-    if (connections[partnerId]) {
-      showToast(`${partnerId} já está na lista`);
-      return;
-    }
+    if (!partnerId || connections[partnerId]) return;
     if (!peer || !peer.id) {
-      showToast('Aguardando registro do ID...');
-      setTimeout(() => addPartner(partnerId), 1500);
+      showToast('Aguardando ID...');
+      setTimeout(() => addPartner(partnerId), 1000);
       return;
     }
-    console.log('Adicionando parceiro:', partnerId);
     const conn = peer.connect(partnerId, { reliable: true });
     connections[partnerId] = conn;
     setupConn(conn);
     renderContactList();
     saveData();
-    showToast(`${partnerId} adicionado`);
+    showToast(`${partnerId} adicionado. Aguardando conexão...`);
   }
 
   addContactFab.addEventListener('click', () => {
     addPartnerModal.classList.remove('hidden');
     newPartnerInput.focus();
   });
-
   cancelAddBtn.addEventListener('click', () => addPartnerModal.classList.add('hidden'));
-
   confirmAddBtn.addEventListener('click', () => {
     const partnerId = newPartnerInput.value.trim();
     if (!partnerId) return showToast('Digite o ID');
@@ -528,29 +484,20 @@
 
   function setupConn(conn) {
     conn.on('open', () => {
-      console.log('Conexão aberta com', conn.peer);
+      console.log('Conectado a', conn.peer);
       renderContactList();
       saveData();
-      // Garante que o parceiro fique salvo
-      const saved = JSON.parse(localStorage.getItem('p2p_savedPartners') || '[]');
-      if (!saved.includes(conn.peer)) {
-        saved.push(conn.peer);
-        localStorage.setItem('p2p_savedPartners', JSON.stringify(saved));
-      }
+      showToast(`Conectado a ${conn.peer}`);
     });
-
     conn.on('data', (data) => {
       playBeep();
       addMessageToHistory(conn.peer, { ...data, sent: false });
     });
-
     conn.on('close', () => {
-      console.log('Conexão fechada com', conn.peer);
+      console.log('Desconectado de', conn.peer);
       renderContactList();
     });
-
-    conn.on('error', (err) => {
-      console.error('Erro na conexão', conn.peer, err);
+    conn.on('error', () => {
       showToast('Erro na conexão com ' + conn.peer);
     });
   }
@@ -568,22 +515,20 @@
       const time = lastMsg ? new Date(lastMsg.time).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '';
       const unread = unreadCounts[id] || 0;
       const isOpen = connections[id] && connections[id].open;
-      const statusHtml = isOpen ? '' : ' <span class="status-off">(off)</span>';
       return `<div class="contact-item" data-id="${id}">
         <div class="avatar">${id.charAt(0).toUpperCase()}</div>
-        <div class="contact-info"><div class="contact-name">${id}${statusHtml}</div><div class="last-msg">${preview}</div></div>
+        <div class="contact-info"><div class="contact-name">${id}<span class="${isOpen ? 'status-on' : 'status-off'}">${isOpen ? '(online)' : '(off)'}</span></div><div class="last-msg">${preview}</div></div>
         <div class="contact-meta"><div class="msg-time">${time}</div>${unread ? `<div class="badge">${unread}</div>` : ''}</div>
       </div>`;
     }).join('');
 
     document.querySelectorAll('.contact-item').forEach(item => {
       item.addEventListener('click', () => openChat(item.dataset.id));
-      // Remover com toque longo
       let pressTimer;
-      item.addEventListener('touchstart', (e) => {
+      item.addEventListener('touchstart', () => {
         pressTimer = setTimeout(() => {
           const partnerId = item.dataset.id;
-          if (confirm(`Deseja remover ${partnerId}?`)) {
+          if (confirm(`Remover ${partnerId}?`)) {
             if (connections[partnerId]) {
               connections[partnerId].close();
               delete connections[partnerId];
@@ -595,40 +540,13 @@
               conversationsScreen.classList.remove('hidden');
               currentPartner = null;
             }
-            // Remove dos salvos
-            const saved = JSON.parse(localStorage.getItem('p2p_savedPartners') || '[]');
-            const updated = saved.filter(p => p !== partnerId);
-            localStorage.setItem('p2p_savedPartners', JSON.stringify(updated));
             renderContactList();
             saveData();
-            showToast(`${partnerId} removido`);
           }
         }, 800);
       });
       item.addEventListener('touchend', () => clearTimeout(pressTimer));
       item.addEventListener('touchmove', () => clearTimeout(pressTimer));
-      item.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        const partnerId = item.dataset.id;
-        if (confirm(`Remover ${partnerId}?`)) {
-          if (connections[partnerId]) {
-            connections[partnerId].close();
-            delete connections[partnerId];
-          }
-          delete chatHistory[partnerId];
-          delete unreadCounts[partnerId];
-          if (currentPartner === partnerId) {
-            chatScreen.classList.add('hidden');
-            conversationsScreen.classList.remove('hidden');
-            currentPartner = null;
-          }
-          const saved = JSON.parse(localStorage.getItem('p2p_savedPartners') || '[]');
-          const updated = saved.filter(p => p !== partnerId);
-          localStorage.setItem('p2p_savedPartners', JSON.stringify(updated));
-          renderContactList();
-          saveData();
-        }
-      });
     });
   }
 
@@ -652,8 +570,7 @@
       let content = '';
       if (m.type === 'text') content = m.content;
       else if (m.type === 'file') {
-        const src = m.content;
-        content = m.mime?.startsWith('image/') ? `<img src="${src}" style="max-width:200px;">` : `<video src="${src}" controls style="max-width:200px;"></video>`;
+        content = m.mime?.startsWith('image/') ? `<img src="${m.content}" style="max-width:200px;">` : `<video src="${m.content}" controls style="max-width:200px;"></video>`;
       } else if (m.type === 'audio') content = `<audio src="${m.content}" controls style="width:180px;"></audio>`;
       return `<div class="message ${cls}"><div>${content}</div><div class="time">${time}</div></div>`;
     }).join('');
@@ -676,9 +593,8 @@
   function sendMessage(type, content, mime) {
     if (!currentPartner) return;
     const conn = connections[currentPartner];
-    if (!conn) return showToast('Você não está conectado a ' + currentPartner);
-    if (!conn.open) {
-      showToast('Conexão ainda não estabelecida. Aguarde o status "Conectado".');
+    if (!conn || !conn.open) {
+      showToast('Sem conexão. Verifique se ambos adicionaram o ID.');
       return;
     }
     const data = { type, content, mime, sender: myId };
@@ -692,7 +608,6 @@
     sendMessage('text', txt);
     messageInput.value = '';
   });
-
   messageInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendBtn.click(); });
 
   galleryBtn.addEventListener('click', () => fileInput.click());
@@ -735,14 +650,13 @@
   async function startCall(video = false) {
     if (!currentPartner) return;
     const conn = connections[currentPartner];
-    if (!conn || !conn.open) return showToast('Conexão não está ativa para chamada');
+    if (!conn || !conn.open) return showToast('Conexão não disponível para chamada');
     try {
       localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video });
       const call = peer.call(currentPartner, localStream, { video });
       setupCall(call);
-    } catch(e) { showToast('Erro ao iniciar chamada: ' + e.message); }
+    } catch(e) { showToast('Erro ao iniciar chamada'); }
   }
-
   function setupCall(call) {
     currentCall = call;
     activeCallPanel.classList.remove('hidden');
@@ -756,7 +670,6 @@
     call.on('close', endCall);
     call.on('error', endCall);
   }
-
   function endCall() {
     if (currentCall) currentCall.close();
     if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
@@ -764,7 +677,6 @@
     activeCallPanel.classList.add('hidden');
     currentCall = null;
   }
-
   chatVoiceCallBtn.addEventListener('click', () => startCall(false));
   chatVideoCallBtn.addEventListener('click', () => startCall(true));
 
@@ -820,4 +732,4 @@
   });
 </script>
 </body>
-          </html>
+        </html>
