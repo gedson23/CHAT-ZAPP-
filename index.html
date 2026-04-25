@@ -339,9 +339,9 @@
 
   // ===== VARIÁVEIS GLOBAIS =====
   let peer, myId = '';
-  let connections = {};
-  let chatHistory = {};       // { partnerId: [ { type, content, time, sent } ] }
-  let unreadCounts = {};      // { partnerId: number }
+  let connections = {};       // { partnerId: DataConnection }
+  let chatHistory = {};      // { partnerId: [ { type, content, time, sent } ] }
+  let unreadCounts = {};     // { partnerId: number }
   let currentPartner = null;
   let mediaRecorder, audioChunks = [], recording = false;
   let currentCall = null, localStream = null;
@@ -384,7 +384,12 @@
   function saveData() {
     localStorage.setItem('p2p_chatHistory', JSON.stringify(chatHistory));
     localStorage.setItem('p2p_unreadCounts', JSON.stringify(unreadCounts));
-    localStorage.setItem('p2p_partners', JSON.stringify(Object.keys(connections)));
+    // Salva apenas os IDs dos parceiros que já estiveram conectados
+    const savedPartners = JSON.parse(localStorage.getItem('p2p_savedPartners') || '[]');
+    const currentIds = Object.keys(connections);
+    // Mescla sem duplicar
+    const merged = [...new Set([...savedPartners, ...currentIds])];
+    localStorage.setItem('p2p_savedPartners', JSON.stringify(merged));
   }
 
   function loadData() {
@@ -394,7 +399,7 @@
     } catch(e) {}
   }
 
-  // ===== GERENCIAMENTO DE CONEXÕES =====
+  // ===== CONEXÕES =====
   function showToast(msg) {
     toast.textContent = msg;
     toast.classList.add('show');
@@ -402,7 +407,7 @@
   }
 
   function initializeApp() {
-    loadData(); // carrega histórico e contagens
+    loadData();
     let savedId = localStorage.getItem('p2p_myId');
     if (!savedId) {
       savedId = prompt('Defina seu ID (ex.: Joao):');
@@ -419,22 +424,28 @@
     peer = new Peer(myId, {
       config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] }
     });
+
     peer.on('open', (id) => {
       myId = id;
       localStorage.setItem('p2p_myId', id);
+      console.log('Peer aberto, ID:', id);
       // Reconectar automaticamente aos parceiros salvos
       reconnectSavedPartners();
     });
-    peer.on('connection', (conn) => {
-      if (!connections[conn.peer]) {
-        connections[conn.peer] = conn;
-        setupConn(conn);
-        renderContactList();
-        saveData();
-      } else {
-        conn.close();
+
+    peer.on('connection', (incomingConn) => {
+      const partnerId = incomingConn.peer;
+      console.log('Conexão recebida de:', partnerId);
+      // Se já existir uma conexão antiga, feche-a e use a nova
+      if (connections[partnerId]) {
+        connections[partnerId].close();
       }
+      connections[partnerId] = incomingConn;
+      setupConn(incomingConn);
+      renderContactList();
+      saveData();
     });
+
     peer.on('call', (call) => {
       incomingCallerId.textContent = call.peer;
       incomingCallPanel.classList.remove('hidden');
@@ -448,14 +459,20 @@
       };
       rejectCallBtn.onclick = () => { call.close(); incomingCallPanel.classList.add('hidden'); };
     });
-    peer.on('error', (e) => showToast('Erro: ' + e.message));
+
+    peer.on('error', (e) => showToast('Erro Peer: ' + e.message));
   }
 
-  // Reconecta automaticamente aos parceiros que estavam salvos
   function reconnectSavedPartners() {
-    const savedPartners = JSON.parse(localStorage.getItem('p2p_partners') || '[]');
+    if (!peer || !peer.id) {
+      setTimeout(reconnectSavedPartners, 1000);
+      return;
+    }
+    const savedPartners = JSON.parse(localStorage.getItem('p2p_savedPartners') || '[]');
     savedPartners.forEach(partnerId => {
+      // Só conecta se ainda não existe uma conexão aberta
       if (!connections[partnerId]) {
+        console.log('Reconectando a', partnerId);
         const conn = peer.connect(partnerId, { reliable: true });
         connections[partnerId] = conn;
         setupConn(conn);
@@ -464,14 +481,14 @@
     renderContactList();
   }
 
-  // Adicionar parceiro (chamado pelo botão +)
   function addPartner(partnerId) {
     if (!partnerId || connections[partnerId]) return;
     if (!peer || !peer.id) {
-      showToast('Aguardando conexão...');
+      showToast('Aguardando registro do ID...');
       setTimeout(() => addPartner(partnerId), 1500);
       return;
     }
+    console.log('Adicionando parceiro:', partnerId);
     const conn = peer.connect(partnerId, { reliable: true });
     connections[partnerId] = conn;
     setupConn(conn);
@@ -480,8 +497,13 @@
     showToast(`${partnerId} adicionado`);
   }
 
-  addContactFab.addEventListener('click', () => { addPartnerModal.classList.remove('hidden'); newPartnerInput.focus(); });
+  addContactFab.addEventListener('click', () => {
+    addPartnerModal.classList.remove('hidden');
+    newPartnerInput.focus();
+  });
+
   cancelAddBtn.addEventListener('click', () => addPartnerModal.classList.add('hidden'));
+
   confirmAddBtn.addEventListener('click', () => {
     const partnerId = newPartnerInput.value.trim();
     if (!partnerId) return showToast('Digite o ID');
@@ -492,27 +514,35 @@
 
   function setupConn(conn) {
     conn.on('open', () => {
+      console.log('Conexão aberta com', conn.peer);
       renderContactList();
       saveData();
+      // Atualiza a lista de parceiros salvos
+      const saved = JSON.parse(localStorage.getItem('p2p_savedPartners') || '[]');
+      if (!saved.includes(conn.peer)) {
+        saved.push(conn.peer);
+        localStorage.setItem('p2p_savedPartners', JSON.stringify(saved));
+      }
     });
+
     conn.on('data', (data) => {
       playBeep();
       addMessageToHistory(conn.peer, { ...data, sent: false });
     });
+
     conn.on('close', () => {
-      // Não remove da lista, mantém para reconexão futura
-      updateContactListStatus();
+      console.log('Conexão fechada com', conn.peer);
+      // Não remove o parceiro, apenas marca como offline
+      renderContactList();
     });
-    conn.on('error', () => {
-      updateContactListStatus();
+
+    conn.on('error', (err) => {
+      console.error('Erro na conexão', conn.peer, err);
+      showToast('Erro na conexão com ' + conn.peer);
     });
   }
 
-  function updateContactListStatus() {
-    // Apenas renderiza novamente, mantendo os contatos
-    renderContactList();
-  }
-
+  // ===== INTERFACE DE CONTATOS =====
   function renderContactList() {
     const ids = Object.keys(connections);
     if (ids.length === 0) {
@@ -524,24 +554,38 @@
       const preview = lastMsg ? (lastMsg.type === 'text' ? lastMsg.content : (lastMsg.type === 'file' ? '📷 Mídia' : '🎤 Áudio')) : '';
       const time = lastMsg ? new Date(lastMsg.time).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '';
       const unread = unreadCounts[id] || 0;
+      const isOpen = connections[id] && connections[id].open;
+      const statusIndicator = isOpen ? '' : ' (off)';
       return `<div class="contact-item" data-id="${id}">
         <div class="avatar">${id.charAt(0).toUpperCase()}</div>
-        <div class="contact-info"><div class="contact-name">${id}</div><div class="last-msg">${preview}</div></div>
+        <div class="contact-info"><div class="contact-name">${id}${statusIndicator}</div><div class="last-msg">${preview}</div></div>
         <div class="contact-meta"><div class="msg-time">${time}</div>${unread ? `<div class="badge">${unread}</div>` : ''}</div>
       </div>`;
     }).join('');
 
     document.querySelectorAll('.contact-item').forEach(item => {
       item.addEventListener('click', () => openChat(item.dataset.id));
+      // Remover parceiro com toque longo
       let pressTimer;
       item.addEventListener('touchstart', (e) => {
         pressTimer = setTimeout(() => {
           const partnerId = item.dataset.id;
           if (confirm(`Deseja remover ${partnerId}?`)) {
-            if (connections[partnerId]) { connections[partnerId].close(); delete connections[partnerId]; }
+            if (connections[partnerId]) {
+              connections[partnerId].close();
+              delete connections[partnerId];
+            }
             delete chatHistory[partnerId];
             delete unreadCounts[partnerId];
-            if (currentPartner === partnerId) { chatScreen.classList.add('hidden'); conversationsScreen.classList.remove('hidden'); currentPartner = null; }
+            if (currentPartner === partnerId) {
+              chatScreen.classList.add('hidden');
+              conversationsScreen.classList.remove('hidden');
+              currentPartner = null;
+            }
+            // Remove também da lista de salvos
+            const saved = JSON.parse(localStorage.getItem('p2p_savedPartners') || '[]');
+            const updated = saved.filter(p => p !== partnerId);
+            localStorage.setItem('p2p_savedPartners', JSON.stringify(updated));
             renderContactList();
             saveData();
             showToast(`${partnerId} removido`);
@@ -552,11 +596,22 @@
       item.addEventListener('touchmove', () => clearTimeout(pressTimer));
       item.addEventListener('contextmenu', (e) => {
         e.preventDefault();
-        if (confirm(`Remover ${item.dataset.id}?`)) {
-          if (connections[item.dataset.id]) { connections[item.dataset.id].close(); delete connections[item.dataset.id]; }
-          delete chatHistory[item.dataset.id];
-          delete unreadCounts[item.dataset.id];
-          if (currentPartner === item.dataset.id) { chatScreen.classList.add('hidden'); conversationsScreen.classList.remove('hidden'); currentPartner = null; }
+        const partnerId = item.dataset.id;
+        if (confirm(`Remover ${partnerId}?`)) {
+          if (connections[partnerId]) {
+            connections[partnerId].close();
+            delete connections[partnerId];
+          }
+          delete chatHistory[partnerId];
+          delete unreadCounts[partnerId];
+          if (currentPartner === partnerId) {
+            chatScreen.classList.add('hidden');
+            conversationsScreen.classList.remove('hidden');
+            currentPartner = null;
+          }
+          const saved = JSON.parse(localStorage.getItem('p2p_savedPartners') || '[]');
+          const updated = saved.filter(p => p !== partnerId);
+          localStorage.setItem('p2p_savedPartners', JSON.stringify(updated));
           renderContactList();
           saveData();
         }
@@ -608,7 +663,8 @@
   function sendMessage(type, content, mime) {
     if (!currentPartner) return;
     const conn = connections[currentPartner];
-    if (!conn || !conn.open) return showToast('Desconectado');
+    if (!conn) return showToast('Você não está conectado a ' + currentPartner);
+    if (!conn.open) return showToast('Conexão ainda não está aberta. Aguarde...');
     const data = { type, content, mime, sender: myId };
     conn.send(data);
     addMessageToHistory(currentPartner, { ...data, sent: true });
@@ -620,6 +676,7 @@
     sendMessage('text', txt);
     messageInput.value = '';
   });
+
   messageInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendBtn.click(); });
 
   galleryBtn.addEventListener('click', () => fileInput.click());
@@ -658,16 +715,18 @@
     }
   });
 
+  // ===== CHAMADAS =====
   async function startCall(video = false) {
     if (!currentPartner) return;
     const conn = connections[currentPartner];
-    if (!conn || !conn.open) return showToast('Parceiro offline');
+    if (!conn || !conn.open) return showToast('Conexão não está ativa');
     try {
       localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video });
       const call = peer.call(currentPartner, localStream, { video });
       setupCall(call);
-    } catch(e) { showToast('Erro ao iniciar chamada'); }
+    } catch(e) { showToast('Erro ao iniciar chamada: ' + e.message); }
   }
+
   function setupCall(call) {
     currentCall = call;
     activeCallPanel.classList.remove('hidden');
@@ -681,6 +740,7 @@
     call.on('close', endCall);
     call.on('error', endCall);
   }
+
   function endCall() {
     if (currentCall) currentCall.close();
     if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
@@ -688,6 +748,7 @@
     activeCallPanel.classList.add('hidden');
     currentCall = null;
   }
+
   chatVoiceCallBtn.addEventListener('click', () => startCall(false));
   chatVideoCallBtn.addEventListener('click', () => startCall(true));
 
@@ -706,6 +767,7 @@
     renderContactList();
   });
 
+  // ===== CONFIGURAÇÕES =====
   settingsToggle.addEventListener('click', () => settingsModal.classList.remove('hidden'));
   closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
 
@@ -742,4 +804,4 @@
   });
 </script>
 </body>
-  </html>
+                                                           </html>
