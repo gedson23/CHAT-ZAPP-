@@ -6,245 +6,90 @@
   <title>Chat Zap</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      height: 100%; width: 100%; overflow: hidden;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: #121212; color: #e0e0e0;
-    }
-    .app {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      display: flex; flex-direction: column; background: #111;
-    }
-
-    .top-bar {
-      background: #075e54; color: white; padding: 10px 16px;
-      display: flex; align-items: center; gap: 12px; font-weight: 500; flex-shrink: 0;
-    }
+    html, body { height: 100%; width: 100%; overflow: hidden; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #121212; color: #e0e0e0; }
+    .app { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; background: #111; }
+    .top-bar { background: #075e54; color: white; padding: 10px 16px; display: flex; align-items: center; gap: 12px; font-weight: 500; flex-shrink: 0; }
     .top-bar h1 { flex: 1; font-size: 18px; }
-    .top-bar .icon-btn { background: none; border: none; color: white; font-size: 22px; cursor: pointer; }
-
+    .icon-btn { background: none; border: none; color: white; font-size: 22px; cursor: pointer; }
     .main-content { flex: 1; overflow: hidden; position: relative; }
-    .conversations-panel { height: 100%; display: flex; flex-direction: column; background: #121212; }
-    .contact-list { flex: 1; overflow-y: auto; }
-    .contact-item {
-      display: flex; align-items: center; padding: 12px 16px;
-      border-bottom: 1px solid #1c1c1c; cursor: pointer; transition: 0.1s; user-select: none;
-    }
-    .contact-item:active { background: #1e1e1e; }
-    .avatar {
-      width: 50px; height: 50px; border-radius: 50%; background: #4a4a4a;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px; color: white; margin-right: 14px; flex-shrink: 0;
-      background-size: cover; background-position: center;
-    }
-    .contact-info { flex: 1; min-width: 0; }
-    .contact-name { font-size: 16px; color: #e0e0e0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .last-msg { font-size: 13px; color: #999; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .contact-meta { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-    .msg-time { font-size: 12px; color: #888; }
-    .badge {
-      background: #25d366; color: white; border-radius: 50%; width: 22px; height: 22px;
-      font-size: 12px; display: flex; align-items: center; justify-content: center;
-    }
-
-    .fab {
-      position: absolute; bottom: 15px; right: 15px;
-      background: #25d366; color: white; border: none; border-radius: 50%;
-      width: 52px; height: 52px; font-size: 28px;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; z-index: 10;
-    }
-
+    .panel { height: 100%; display: flex; flex-direction: column; background: #121212; }
+    .list { flex: 1; overflow-y: auto; }
+    .contact-item, .log-item { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #1c1c1c; cursor: pointer; transition: 0.1s; user-select: none; }
+    .contact-item:active, .log-item:active { background: #1e1e1e; }
+    .avatar { width: 50px; height: 50px; border-radius: 50%; background: #4a4a4a; display: flex; align-items: center; justify-content: center; font-size: 22px; color: white; margin-right: 14px; flex-shrink: 0; background-size: cover; background-position: center; }
+    .info { flex: 1; min-width: 0; }
+    .name { font-size: 16px; color: #e0e0e0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .preview { font-size: 13px; color: #999; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .meta { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .time { font-size: 12px; color: #888; }
+    .badge { background: #25d366; color: white; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+    .fab { position: absolute; bottom: 15px; right: 15px; background: #25d366; color: white; border: none; border-radius: 50%; width: 52px; height: 52px; font-size: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; z-index: 10; }
     .screen-chat { height: 100%; display: flex; flex-direction: column; }
-    .header-chat {
-      background: #075e54; color: white; padding: 8px 12px;
-      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
-    }
-    .back-btn { background: none; border: none; color: white; font-size: 22px; cursor: pointer; }
-    .header-chat .contact-name { flex: 1; font-size: 16px; font-weight: 500; }
-    .typing-indicator { font-size: 11px; color: #b2dfdb; margin-left: 10px; }
+    .header-chat { background: #075e54; color: white; padding: 8px 12px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
     .chat-icons { display: flex; gap: 16px; }
-    .chat-area {
-      flex: 1; overflow-y: auto; padding: 10px;
-      display: flex; flex-direction: column; gap: 4px;
-      background: #e5ddd5 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M30 30 L70 70 M70 30 L30 70" stroke="rgba(0,0,0,0.08)" stroke-width="2"/></svg>') repeat;
-    }
-    .message {
-      max-width: 80%; padding: 6px 10px; border-radius: 8px;
-      font-size: 13px; line-height: 1.4; word-wrap: break-word;
-      position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.1);
-    }
-    .message.sent { background: #dcf8c6; color: #111; align-self: flex-end; border-top-right-radius: 2px; }
-    .message.received { background: white; color: #111; align-self: flex-start; border-top-left-radius: 2px; }
+    .chat-area { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 4px; background: #e5ddd5 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M30 30 L70 70 M70 30 L30 70" stroke="rgba(0,0,0,0.08)" stroke-width="2"/></svg>') repeat; background-size: cover; }
+    .message { max-width: 80%; padding: 6px 10px; border-radius: 8px; font-size: 13px; line-height: 1.4; word-wrap: break-word; position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+    .sent { background: #dcf8c6; color: #111; align-self: flex-end; border-top-right-radius: 2px; }
+    .received { background: white; color: #111; align-self: flex-start; border-top-left-radius: 2px; }
     .message .time { font-size: 10px; color: #666; text-align: right; margin-top: 3px; }
     .message img, .message video { max-width: 180px; border-radius: 4px; margin-top: 4px; }
     .message audio { width: 160px; margin-top: 4px; }
-
-    .input-bar {
-      background: #f0f0f0; padding: 6px 10px; display: flex; gap: 6px;
-      align-items: center; border-top: 1px solid #ccc; flex-shrink: 0;
-    }
-    .input-bar input {
-      flex: 1; min-width: 80px; border: none; border-radius: 20px;
-      padding: 8px 14px; outline: none; font-size: 14px; background: white;
-    }
-    .action-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #777; }
-
-    .tab-bar {
-      background: #1e1e1e; display: flex; border-top: 1px solid #333; flex-shrink: 0;
-      padding: 4px 0;
-    }
-    .tab-item {
-      flex: 1; display: flex; flex-direction: column; align-items: center;
-      justify-content: center; padding: 4px 0; color: #888; font-size: 10px; cursor: pointer; transition: 0.2s;
-    }
+    .input-bar { background: #f0f0f0; padding: 6px 10px; display: flex; gap: 6px; align-items: center; border-top: 1px solid #ccc; flex-shrink: 0; }
+    .input-bar input { flex: 1; min-width: 80px; border: none; border-radius: 20px; padding: 8px 14px; outline: none; font-size: 14px; background: white; }
+    .tab-bar { background: #1e1e1e; display: flex; border-top: 1px solid #333; flex-shrink: 0; padding: 4px 0; }
+    .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px 0; color: #888; font-size: 10px; cursor: pointer; transition: 0.2s; }
     .tab-item span { font-size: 18px; }
     .tab-item.active { color: #25d366; }
-
     .hidden { display: none !important; }
-
-    .modal {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 20;
-    }
-    .modal-content {
-      background: #222; padding: 20px; border-radius: 16px; width: 90%;
-      display: flex; flex-direction: column; gap: 12px;
-    }
-    .modal-content input { background: #333; border: none; color: white; padding: 10px; border-radius: 10px; outline: none; font-size: 14px; }
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 20; }
+    .modal-content { background: #222; padding: 20px; border-radius: 16px; width: 90%; display: flex; flex-direction: column; gap: 12px; }
+    .modal-content input, .modal-content label { background: #333; border: none; color: white; padding: 10px; border-radius: 10px; outline: none; font-size: 14px; }
     .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
     .btn { background: #25d366; border: none; color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-size: 14px; }
     .btn-outline { background: transparent; border: 1px solid #25d366; color: #25d366; }
-
-    .toast {
-      position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%);
-      background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px;
-      z-index: 40; transition: 0.3s; opacity: 0;
-    }
+    .toast { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; z-index: 40; transition: 0.3s; opacity: 0; }
     .toast.show { opacity: 1; }
-
-    .emoji-panel {
-      display: flex; flex-wrap: wrap; gap: 8px; padding: 8px;
-      background: #f0f0f0; border-top: 1px solid #ccc;
-    }
+    .emoji-panel { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; background: #f0f0f0; border-top: 1px solid #ccc; }
     .emoji-btn { background: none; border: none; font-size: 22px; cursor: pointer; padding: 4px; }
     .status-on { color: #25d366; font-size: 12px; margin-left: 6px; }
     .status-off { color: #ff6b6b; font-size: 12px; margin-left: 6px; }
-
-    .call-video-container {
-      position: relative; width: 100%; background: #000; border-radius: 10px; overflow: hidden; margin-bottom: 10px;
-    }
+    .call-video-container { position: relative; width: 100%; background: #000; border-radius: 10px; overflow: hidden; margin-bottom: 10px; }
     .remote-video { width: 100%; max-height: 200px; object-fit: cover; }
-    .local-video {
-      position: absolute; bottom: 8px; right: 8px; width: 70px; height: 55px;
-      border-radius: 6px; border: 2px solid white; object-fit: cover;
-    }
+    .local-video { position: absolute; bottom: 8px; right: 8px; width: 70px; height: 55px; border-radius: 6px; border: 2px solid white; object-fit: cover; }
+    .duration { font-size: 10px; color: #999; }
+    .ringtone-text { color: #25d366; font-size: 14px; margin: 10px; }
   </style>
 </head>
 <body>
 <div class="app" id="appRoot">
-  <div class="top-bar">
-    <h1>Chat Zap</h1>
-    <button class="icon-btn" id="settingsToggle" title="Personalizar">⚙️</button>
-  </div>
-
+  <div class="top-bar"><h1>Chat Zap</h1><button class="icon-btn" id="settingsToggle">⚙️</button></div>
   <div class="main-content">
-    <div id="conversationsScreen" class="conversations-panel">
-      <div class="contact-list" id="contactList">
-        <p style="color:#555; text-align:center; margin-top:80px;">Nenhum contato. Toque no + para adicionar.</p>
-      </div>
-      <button class="fab" id="addContactFab">+</button>
+    <!-- Painéis de abas -->
+    <div id="conversationsPanel" class="panel"><div class="list" id="contactList"><p style="color:#555;text-align:center;margin-top:80px;">Nenhum contato.</p></div><button class="fab" id="addContactFab">+</button></div>
+    <div id="updatesPanel" class="panel hidden"><div class="list" id="updatesList"><p style="color:#555;text-align:center;margin-top:80px;">Carregando...</p></div></div>
+    <div id="communitiesPanel" class="panel hidden">
+      <div style="padding:16px;"><input type="text" id="broadcastInput" placeholder="Mensagem para todos os contatos" style="width:100%; padding:12px; border-radius:20px; background:#333; color:white; border:none; margin-bottom:10px;"><button class="btn" id="sendBroadcastBtn">Enviar para todos</button></div>
+      <div class="list" id="broadcastStatus"><p style="color:#555;text-align:center;">As mensagens enviadas aparecerão aqui.</p></div>
     </div>
-
+    <div id="callsPanel" class="panel hidden"><div class="list" id="callLogList"><p style="color:#555;text-align:center;margin-top:80px;">Nenhuma chamada.</p></div></div>
+    <!-- Chat individual -->
     <div id="chatScreen" class="screen-chat hidden">
-      <div class="header-chat">
-        <button class="back-btn" id="backBtn">←</button>
-        <span class="contact-name" id="chatTitle">Contato</span>
-        <span id="typingIndicator" class="typing-indicator hidden">digitando...</span>
-        <div class="chat-icons">
-          <button class="action-btn" id="chatVoiceCallBtn" style="color:white;">📞</button>
-          <button class="action-btn" id="chatVideoCallBtn" style="color:white;">📹</button>
-        </div>
-      </div>
+      <div class="header-chat"><button class="back-btn" id="backBtn">←</button><span class="name" id="chatTitle">Contato</span><span id="typingIndicator" class="typing-indicator hidden">digitando...</span><div class="chat-icons"><button class="action-btn" id="chatVoiceCallBtn" style="color:white;">📞</button><button class="action-btn" id="chatVideoCallBtn" style="color:white;">📹</button></div></div>
       <div class="chat-area" id="chatMessages"></div>
       <div id="emojiPanel" class="emoji-panel hidden"></div>
-      <div class="input-bar">
-        <button class="action-btn" id="cameraBtn" title="Tirar foto">📷</button>
-        <button class="action-btn" id="galleryBtn" title="Galeria">🖼️</button>
-        <input type="text" id="messageInput" placeholder="Mensagem" autocomplete="off">
-        <button class="action-btn" id="emojiBtn">😀</button>
-        <button class="action-btn" id="sendBtn">➤</button>
-        <button class="action-btn" id="micBtn">🎤</button>
-      </div>
+      <div class="input-bar"><button class="action-btn" id="cameraBtn">📷</button><button class="action-btn" id="galleryBtn">🖼️</button><input type="text" id="messageInput" placeholder="Mensagem" autocomplete="off"><button class="action-btn" id="emojiBtn">😀</button><button class="action-btn" id="sendBtn">➤</button><button class="action-btn" id="micBtn">🎤</button></div>
       <input type="file" id="fileInput" accept="image/*,video/*" class="hidden">
       <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
     </div>
   </div>
-
-  <!-- Modal de primeiro acesso (apenas DDD+número) -->
-  <div id="firstTimeModal" class="modal hidden">
-    <div class="modal-content">
-      <h2 style="color:white;">Bem-vindo ao Chat Zap</h2>
-      <p style="color:#ccc; font-size:13px;">Digite seu número com DDD (sem o 55).</p>
-      <input type="tel" id="myNumberInput" placeholder="Ex.: 84999999999">
-      <div class="modal-buttons">
-        <button class="btn" id="saveMyNumberBtn">Entrar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal de adicionar parceiro -->
-  <div id="addPartnerModal" class="modal hidden">
-    <div class="modal-content">
-      <h2 style="color:white;">Adicionar parceiro</h2>
-      <input type="text" id="newPartnerName" placeholder="Nome do parceiro">
-      <input type="tel" id="newPartnerNumber" placeholder="DDD + número (sem 55)">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <button class="btn-outline" id="selectPhotoBtn">📷 Foto</button>
-        <input type="file" id="partnerPhotoInput" accept="image/*" class="hidden">
-        <span id="photoName" style="color:#aaa; font-size:12px;"></span>
-      </div>
-      <div class="modal-buttons">
-        <button class="btn-outline" id="cancelAddBtn">Cancelar</button>
-        <button class="btn" id="confirmAddBtn">Adicionar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Configurações de fundo -->
-  <div id="settingsModal" class="modal hidden">
-    <div class="modal-content">
-      <h2 style="color:white;">Personalizar fundo</h2>
-      <label style="color:#ccc;">Cor: <input type="color" id="bgColorPicker" value="#e5ddd5"></label>
-      <label style="color:#ccc;">Imagem: <input type="file" id="bgImageInput" accept="image/*"></label>
-      <div class="modal-buttons">
-        <button class="btn-outline" id="resetBgBtn">Limpar</button>
-        <button class="btn" id="closeSettingsBtn">OK</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Chamada ativa -->
-  <div id="activeCallPanel" class="hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1e1e1e; padding:20px; border-radius:16px; text-align:center; z-index:30; min-width:250px;">
-    <div id="callInfo">Chamada...</div>
-    <div id="callTimer" style="font-size:18px; margin:10px;">00:00</div>
-    <audio id="remoteAudio" autoplay style="display:none;"></audio>
-    <div id="videoCallContainer" class="call-video-container hidden">
-      <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
-      <video id="localVideo" class="local-video" autoplay playsinline muted></video>
-    </div>
-    <button id="hangupBtn" style="background:#e74c3c; border:none; color:white; padding:10px 20px; border-radius:20px;">📴 Encerrar</button>
-  </div>
-
-  <!-- Chamada recebida -->
-  <div id="incomingCallPanel" class="hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1e1e1e; padding:20px; border-radius:16px; text-align:center; z-index:30;">
-    <p><span id="incomingCallerId"></span> está ligando...</p>
-    <button id="acceptCallBtn" style="background:#25d366; border:none; color:white; padding:10px 20px; border-radius:20px; margin:5px;">✅ Atender</button>
-    <button id="rejectCallBtn" style="background:#e74c3c; border:none; color:white; padding:10px 20px; border-radius:20px;">❌ Recusar</button>
-  </div>
-
+  <!-- Modais -->
+  <div id="firstTimeModal" class="modal hidden"><div class="modal-content"><h2>Bem-vindo ao Chat Zap</h2><p style="color:#ccc;">Digite seu número com DDD (sem o 55).</p><input type="tel" id="myNumberInput" placeholder="Ex.: 84999999999"><div class="modal-buttons"><button class="btn" id="saveMyNumberBtn">Entrar</button></div></div></div>
+  <div id="addPartnerModal" class="modal hidden"><div class="modal-content"><h2>Adicionar parceiro</h2><input type="text" id="newPartnerName" placeholder="Nome"><input type="tel" id="newPartnerNumber" placeholder="DDD + número"><div style="display:flex;align-items:center;gap:8px;"><button class="btn-outline" id="selectPhotoBtn">📷 Foto</button><input type="file" id="partnerPhotoInput" accept="image/*" class="hidden"><span id="photoName" style="color:#aaa;font-size:12px;"></span></div><div class="modal-buttons"><button class="btn-outline" id="cancelAddBtn">Cancelar</button><button class="btn" id="confirmAddBtn">Adicionar</button></div></div></div>
+  <div id="settingsModal" class="modal hidden"><div class="modal-content"><h2>Personalizar fundo</h2><label>Cor <input type="color" id="bgColorPicker" value="#e5ddd5"></label><label>Imagem <input type="file" id="bgImageInput" accept="image/*"></label><div class="modal-buttons"><button class="btn-outline" id="resetBgBtn">Limpar</button><button class="btn" id="closeSettingsBtn">OK</button></div></div></div>
+  <!-- Chamada -->
+  <div id="activeCallPanel" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e1e1e;padding:20px;border-radius:16px;text-align:center;z-index:30;min-width:250px;"><div id="callInfo"></div><div id="callTimer" style="font-size:18px;margin:10px;">00:00</div><audio id="remoteAudio" autoplay style="display:none;"></audio><div id="videoCallContainer" class="call-video-container hidden"><video id="remoteVideo" class="remote-video" autoplay playsinline></video><video id="localVideo" class="local-video" autoplay playsinline muted></video></div><button id="hangupBtn" style="background:#e74c3c;border:none;color:white;padding:10px 20px;border-radius:20px;">📴 Encerrar</button></div>
+  <div id="incomingCallPanel" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e1e1e;padding:20px;border-radius:16px;text-align:center;z-index:30;"><p><span id="incomingCallerId"></span> está ligando...</p><button id="acceptCallBtn" style="background:#25d366;border:none;color:white;padding:10px 20px;border-radius:20px;margin:5px;">✅ Atender</button><button id="rejectCallBtn" style="background:#e74c3c;border:none;color:white;padding:10px 20px;border-radius:20px;">❌ Recusar</button></div>
   <div class="toast" id="toast"></div>
-
   <div class="tab-bar">
     <div class="tab-item active" data-tab="conversas"><span>💬</span>Conversas</div>
     <div class="tab-item" data-tab="atualizacoes"><span>📢</span>Atualiz.</div>
@@ -256,96 +101,47 @@
 <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
 <script>
   // ===== SOM DE BIP =====
-  function playBeep() {
+  function playBeep() { try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.type = 'sine'; osc.frequency.setValueAtTime(800, ctx.currentTime); gain.gain.setValueAtTime(0.3, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3); osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3); } catch(e) {} }
+  function playRingtone() {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.type = 'square'; osc.frequency.setValueAtTime(440, ctx.currentTime);
+      gain.gain.setValueAtTime(0.5, ctx.currentTime);
       osc.connect(gain); gain.connect(ctx.destination);
-      osc.type = 'sine'; osc.frequency.setValueAtTime(800, ctx.currentTime);
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
-      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
+      osc.start(); osc.stop(ctx.currentTime + 0.2);
     } catch(e) {}
   }
 
-  const $ = (id) => document.getElementById(id);
-  const conversationsScreen = $('conversationsScreen');
-  const chatScreen = $('chatScreen');
-  const contactList = $('contactList');
-  const chatMessages = $('chatMessages');
-  const chatTitle = $('chatTitle');
-  const typingIndicator = $('typingIndicator');
-  const backBtn = $('backBtn');
-  const messageInput = $('messageInput');
-  const sendBtn = $('sendBtn');
-  const cameraBtn = $('cameraBtn');
-  const galleryBtn = $('galleryBtn');
-  const fileInput = $('fileInput');
-  const cameraInput = $('cameraInput');
-  const micBtn = $('micBtn');
-  const emojiBtn = $('emojiBtn');
-  const emojiPanel = $('emojiPanel');
-  const chatVoiceCallBtn = $('chatVoiceCallBtn');
-  const chatVideoCallBtn = $('chatVideoCallBtn');
-  const addContactFab = $('addContactFab');
-  const addPartnerModal = $('addPartnerModal');
-  const newPartnerName = $('newPartnerName');
-  const newPartnerNumber = $('newPartnerNumber');
-  const selectPhotoBtn = $('selectPhotoBtn');
-  const partnerPhotoInput = $('partnerPhotoInput');
-  const photoName = $('photoName');
-  const cancelAddBtn = $('cancelAddBtn');
-  const confirmAddBtn = $('confirmAddBtn');
-  const activeCallPanel = $('activeCallPanel');
-  const incomingCallPanel = $('incomingCallPanel');
-  const callInfo = $('callInfo');
-  const callTimer = $('callTimer');
-  const remoteAudio = $('remoteAudio');
-  const remoteVideo = $('remoteVideo');
-  const localVideo = $('localVideo');
-  const videoCallContainer = $('videoCallContainer');
-  const hangupBtn = $('hangupBtn');
-  const acceptCallBtn = $('acceptCallBtn');
-  const rejectCallBtn = $('rejectCallBtn');
-  const incomingCallerId = $('incomingCallerId');
-  const settingsToggle = $('settingsToggle');
-  const settingsModal = $('settingsModal');
-  const bgColorPicker = $('bgColorPicker');
-  const bgImageInput = $('bgImageInput');
-  const resetBgBtn = $('resetBgBtn');
-  const closeSettingsBtn = $('closeSettingsBtn');
-  const toast = $('toast');
-  const firstTimeModal = $('firstTimeModal');
-  const myNumberInput = $('myNumberInput');
-  const saveMyNumberBtn = $('saveMyNumberBtn');
+  // ===== ELEMENTOS =====
+  const $ = id => document.getElementById(id);
+  const conversationsPanel = $('conversationsPanel'), updatesPanel = $('updatesPanel'), communitiesPanel = $('communitiesPanel'), callsPanel = $('callsPanel'), chatScreen = $('chatScreen');
+  const contactList = $('contactList'), updatesList = $('updatesList'), broadcastInput = $('broadcastInput'), sendBroadcastBtn = $('sendBroadcastBtn'), broadcastStatus = $('broadcastStatus'), callLogList = $('callLogList');
+  const chatMessages = $('chatMessages'), chatTitle = $('chatTitle'), typingIndicator = $('typingIndicator'), backBtn = $('backBtn');
+  const messageInput = $('messageInput'), sendBtn = $('sendBtn'), cameraBtn = $('cameraBtn'), galleryBtn = $('galleryBtn'), fileInput = $('fileInput'), cameraInput = $('cameraInput'), micBtn = $('micBtn'), emojiBtn = $('emojiBtn'), emojiPanel = $('emojiPanel');
+  const chatVoiceCallBtn = $('chatVoiceCallBtn'), chatVideoCallBtn = $('chatVideoCallBtn'), addContactFab = $('addContactFab'), addPartnerModal = $('addPartnerModal');
+  const newPartnerName = $('newPartnerName'), newPartnerNumber = $('newPartnerNumber'), selectPhotoBtn = $('selectPhotoBtn'), partnerPhotoInput = $('partnerPhotoInput'), photoName = $('photoName');
+  const cancelAddBtn = $('cancelAddBtn'), confirmAddBtn = $('confirmAddBtn'), activeCallPanel = $('activeCallPanel'), incomingCallPanel = $('incomingCallPanel');
+  const callInfo = $('callInfo'), callTimer = $('callTimer'), remoteAudio = $('remoteAudio'), remoteVideo = $('remoteVideo'), localVideo = $('localVideo'), videoCallContainer = $('videoCallContainer');
+  const hangupBtn = $('hangupBtn'), acceptCallBtn = $('acceptCallBtn'), rejectCallBtn = $('rejectCallBtn'), incomingCallerId = $('incomingCallerId');
+  const settingsToggle = $('settingsToggle'), settingsModal = $('settingsModal'), bgColorPicker = $('bgColorPicker'), bgImageInput = $('bgImageInput'), resetBgBtn = $('resetBgBtn'), closeSettingsBtn = $('closeSettingsBtn');
+  const toast = $('toast'), firstTimeModal = $('firstTimeModal'), myNumberInput = $('myNumberInput'), saveMyNumberBtn = $('saveMyNumberBtn');
 
-  let peer, myId = '';
-  let connections = {};
-  let chatHistory = {};
-  let unreadCounts = {};
-  let contactProfiles = {};
-  let currentPartner = null;
-  let mediaRecorder, audioChunks = [], recording = false;
-  let currentCall = null, localStream = null;
-  let callStartTime = null, callTimerInterval = null;
-  let savedPartners = [];
-  let partnerPhotoData = null;
-  let typingTimer = null;
+  let peer, myId = '', connections = {}, chatHistory = {}, unreadCounts = {}, contactProfiles = {};
+  let currentPartner = null, mediaRecorder, audioChunks = [], recording = false, audioStartTime = null;
+  let currentCall = null, localStream = null, callStartTime = null, callTimerInterval = null;
+  let savedPartners = [], partnerPhotoData = null, typingTimer = null, callLog = [], pendingMessages = {};
 
-  // Converte DDD+número (ex.: 84999999999) para formato completo 55xxxx
-  function fullNumber(local) {
-    const digits = local.replace(/\D/g, '');
-    if (digits.startsWith('55')) return digits;
-    return '55' + digits;
-  }
+  function fullNumber(local) { const digits = local.replace(/\D/g, ''); return digits.startsWith('55') ? digits : '55' + digits; }
 
-  // ===== PERSISTÊNCIA =====
   function saveData() {
     localStorage.setItem('p2p_chatHistory', JSON.stringify(chatHistory));
     localStorage.setItem('p2p_unreadCounts', JSON.stringify(unreadCounts));
     localStorage.setItem('p2p_savedPartners', JSON.stringify(savedPartners));
     localStorage.setItem('p2p_contactProfiles', JSON.stringify(contactProfiles));
     localStorage.setItem('p2p_myId', myId);
+    localStorage.setItem('p2p_callLog', JSON.stringify(callLog));
+    localStorage.setItem('p2p_pendingMessages', JSON.stringify(pendingMessages));
   }
   function loadData() {
     try {
@@ -353,459 +149,251 @@
       unreadCounts = JSON.parse(localStorage.getItem('p2p_unreadCounts') || '{}');
       savedPartners = JSON.parse(localStorage.getItem('p2p_savedPartners') || '[]');
       contactProfiles = JSON.parse(localStorage.getItem('p2p_contactProfiles') || '{}');
+      callLog = JSON.parse(localStorage.getItem('p2p_callLog') || '[]');
+      pendingMessages = JSON.parse(localStorage.getItem('p2p_pendingMessages') || '{}');
     } catch(e) {}
   }
 
   function isNumeric(str) { return /^\d+$/.test(str); }
-  function resetIfOldData() {
-    const storedId = localStorage.getItem('p2p_myId');
-    if (storedId && !isNumeric(storedId)) {
-      localStorage.clear();
-      return true;
-    }
-    return false;
-  }
+  function resetIfOldData() { if (localStorage.getItem('p2p_myId') && !isNumeric(localStorage.getItem('p2p_myId'))) { localStorage.clear(); return true; } return false; }
 
-  // ===== EMOJIS =====
   const EMOJIS = ['😀','😂','❤️','😍','😭','😘','😊','🤔','😅','😢','👍','🙏','💪','🔥','✨','🎉','😱','👀','💔','😎','🤗','🤣','😋','😇','😜','😌','😈','💋','💖','💗','💘','💝','🎂','☀️','🌙','☕','🍕','🎸','⚽','🚗','✈️','🌟','🐶','🐱','🌸','🌺','🍀'];
-  function buildEmojiPanel() {
-    emojiPanel.innerHTML = EMOJIS.map(e => `<button class="emoji-btn">${e}</button>`).join('');
-    document.querySelectorAll('.emoji-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        messageInput.value += btn.textContent;
-        messageInput.focus();
-        emojiPanel.classList.add('hidden');
-      });
-    });
-  }
-  emojiBtn.addEventListener('click', () => {
-    emojiPanel.classList.toggle('hidden');
-    if (!emojiPanel.classList.contains('hidden')) buildEmojiPanel();
-  });
+  function buildEmojiPanel() { emojiPanel.innerHTML = EMOJIS.map(e => `<button class="emoji-btn">${e}</button>`).join(''); document.querySelectorAll('.emoji-btn').forEach(b => b.addEventListener('click', () => { messageInput.value += b.textContent; messageInput.focus(); emojiPanel.classList.add('hidden'); })); }
+  emojiBtn.addEventListener('click', () => { emojiPanel.classList.toggle('hidden'); if (!emojiPanel.classList.contains('hidden')) buildEmojiPanel(); });
 
   cameraBtn.addEventListener('click', () => cameraInput.click());
-  cameraInput.addEventListener('change', () => {
-    const file = cameraInput.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => sendMessage('file', e.target.result, file.type);
-    reader.readAsDataURL(file);
-    cameraInput.value = '';
-  });
-
+  cameraInput.addEventListener('change', () => { const f = cameraInput.files[0]; if (!f) return; const r = new FileReader(); r.onload = e => sendMessage('file', e.target.result, f.type); r.readAsDataURL(f); cameraInput.value = ''; });
   selectPhotoBtn.addEventListener('click', () => partnerPhotoInput.click());
-  partnerPhotoInput.addEventListener('change', () => {
-    const file = partnerPhotoInput.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      partnerPhotoData = e.target.result;
-      photoName.textContent = 'Foto selecionada';
-    };
-    reader.readAsDataURL(file);
-  });
+  partnerPhotoInput.addEventListener('change', () => { const f = partnerPhotoInput.files[0]; if (!f) return; const r = new FileReader(); r.onload = e => { partnerPhotoData = e.target.result; photoName.textContent = 'Foto selecionada'; }; r.readAsDataURL(f); });
 
-  // ===== PRIMEIRO ACESSO =====
   function checkFirstTime() {
-    if (resetIfOldData()) { /* dados antigos limpos */ }
+    if (resetIfOldData()) {}
     myId = localStorage.getItem('p2p_myId');
     if (!myId) {
       firstTimeModal.classList.remove('hidden');
       saveMyNumberBtn.onclick = () => {
         const local = myNumberInput.value.trim();
-        if (!local || !/^\d+$/.test(local)) return showToast('Digite apenas números (DDD + número)');
+        if (!local || !/^\d+$/.test(local)) return showToast('Digite apenas números');
         myId = fullNumber(local);
         localStorage.setItem('p2p_myId', myId);
         firstTimeModal.classList.add('hidden');
-        initPeer();
-        applyBackground();
-        renderContactList();
+        initPeer(); applyBackground(); renderContactList();
       };
     } else {
-      initPeer();
-      applyBackground();
-      renderContactList();
+      initPeer(); applyBackground(); renderContactList(); renderCallLog();
     }
   }
 
-  function showToast(msg) {
-    toast.textContent = msg;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 2500);
-  }
+  function showToast(msg) { toast.textContent = msg; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2500); }
 
   function initPeer() {
     if (peer) peer.destroy();
-    peer = new Peer(myId, {
-      config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] }
-    });
-
+    peer = new Peer(myId, { config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] } });
     peer.on('open', (id) => {
-      myId = id;
-      console.log('Meu ID:', id);
+      myId = id; console.log('Meu ID:', id);
       if (savedPartners.length > 0) {
-        savedPartners.forEach(pid => {
-          if (!connections[pid]) {
-            const conn = peer.connect(pid, { reliable: true });
-            connections[pid] = conn;
-            setupConn(conn);
-          }
-        });
-        renderContactList();
-        saveData();
+        savedPartners.forEach(pid => { if (!connections[pid]) { const conn = peer.connect(pid, { reliable: true }); connections[pid] = conn; setupConn(conn); } });
+        renderContactList(); saveData();
       }
     });
-
-    peer.on('connection', (incomingConn) => {
-      const partnerId = incomingConn.peer;
-      console.log('Conexão recebida de:', partnerId);
-      if (connections[partnerId]) connections[partnerId].close();
-      connections[partnerId] = incomingConn;
-      if (!savedPartners.includes(partnerId)) {
-        savedPartners.push(partnerId);
-      }
-      setupConn(incomingConn);
-      renderContactList();
-      saveData();
+    peer.on('connection', (incoming) => {
+      const pid = incoming.peer; if (connections[pid]) connections[pid].close(); connections[pid] = incoming;
+      if (!savedPartners.includes(pid)) savedPartners.push(pid); setupConn(incoming); renderContactList(); saveData();
     });
-
     peer.on('call', (call) => {
-      incomingCallerId.textContent = contactProfiles[call.peer]?.name || call.peer;
-      incomingCallPanel.classList.remove('hidden');
+      incomingCallerId.textContent = contactProfiles[call.peer]?.name || call.peer; incomingCallPanel.classList.remove('hidden');
+      const ringInterval = setInterval(() => playRingtone(), 1500);
       acceptCallBtn.onclick = async () => {
+        clearInterval(ringInterval);
         try {
           localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: call.options?.video || false });
-          call.answer(localStream);
-          setupCall(call);
-          incomingCallPanel.classList.add('hidden');
-        } catch(e) { showToast('Permissão negada (verifique HTTPS).'); }
+          call.answer(localStream); setupCall(call, true); incomingCallPanel.classList.add('hidden');
+        } catch(e) { showToast('Permissão negada (HTTPS).'); }
       };
-      rejectCallBtn.onclick = () => { call.close(); incomingCallPanel.classList.add('hidden'); };
+      rejectCallBtn.onclick = () => { clearInterval(ringInterval); call.close(); incomingCallPanel.classList.add('hidden'); };
     });
-
-    peer.on('error', (e) => showToast('Erro: ' + e.message));
+    peer.on('error', e => showToast('Erro: ' + e.message));
   }
 
   function addPartner(name, localNumber) {
-    const number = fullNumber(localNumber);
-    if (!number || number === myId) return;
-    if (!peer || !peer.id) {
-      setTimeout(() => addPartner(name, localNumber), 1000);
-      return;
-    }
-    const pid = number;
-    contactProfiles[pid] = { name: name || pid, photo: partnerPhotoData || '', number: pid };
-    if (!savedPartners.includes(pid)) savedPartners.push(pid);
-    partnerPhotoData = null;
-    if (connections[pid]) return;
-    const conn = peer.connect(pid, { reliable: true });
-    connections[pid] = conn;
-    setupConn(conn);
-    renderContactList();
-    saveData();
-    showToast(`${name || pid} adicionado(a).`);
+    const number = fullNumber(localNumber); if (!number || number === myId) return;
+    if (!peer || !peer.id) { setTimeout(() => addPartner(name, localNumber), 1000); return; }
+    contactProfiles[number] = { name: name || number, photo: partnerPhotoData || '', number };
+    if (!savedPartners.includes(number)) savedPartners.push(number); partnerPhotoData = null;
+    if (connections[number]) return;
+    const conn = peer.connect(number, { reliable: true }); connections[number] = conn; setupConn(conn); renderContactList(); saveData();
+    showToast(`${name || number} adicionado(a).`);
   }
 
-  addContactFab.addEventListener('click', () => {
-    addPartnerModal.classList.remove('hidden');
-    newPartnerName.value = '';
-    newPartnerNumber.value = '';
-    photoName.textContent = '';
-    partnerPhotoData = null;
-  });
+  addContactFab.addEventListener('click', () => { addPartnerModal.classList.remove('hidden'); newPartnerName.value=''; newPartnerNumber.value=''; photoName.textContent=''; partnerPhotoData=null; });
   cancelAddBtn.addEventListener('click', () => addPartnerModal.classList.add('hidden'));
   confirmAddBtn.addEventListener('click', () => {
-    const name = newPartnerName.value.trim();
-    const localNumber = newPartnerNumber.value.trim();
-    if (!name || !localNumber) return showToast('Preencha nome e número (DDD + número)');
-    addPartner(name, localNumber);
-    addPartnerModal.classList.add('hidden');
+    const name = newPartnerName.value.trim(), local = newPartnerNumber.value.trim();
+    if (!name || !local) return showToast('Preencha nome e número'); addPartner(name, local); addPartnerModal.classList.add('hidden');
   });
 
   function setupConn(conn) {
     conn.on('open', () => {
-      renderContactList();
-      saveData();
+      renderContactList(); saveData();
+      if (pendingMessages[conn.peer]) {
+        pendingMessages[conn.peer].forEach(data => conn.send(data));
+        delete pendingMessages[conn.peer]; saveData();
+        addMessageToHistory(conn.peer, { type: 'text', content: '📨 Mensagens pendentes enviadas.', sent: true });
+      }
     });
     conn.on('data', (data) => {
-      if (data.type === 'typing') {
-        if (currentPartner === conn.peer) {
-          typingIndicator.textContent = 'digitando...';
-          typingIndicator.classList.remove('hidden');
-          clearTimeout(typingTimer);
-          typingTimer = setTimeout(() => typingIndicator.classList.add('hidden'), 1500);
-        }
-        return;
-      }
-      if (data.type === 'stoptyping') {
-        if (currentPartner === conn.peer) typingIndicator.classList.add('hidden');
-        return;
-      }
-      playBeep();
-      addMessageToHistory(conn.peer, { ...data, sent: false });
+      if (data.type === 'typing') { if (currentPartner === conn.peer) { typingIndicator.textContent = 'digitando...'; typingIndicator.classList.remove('hidden'); clearTimeout(typingTimer); typingTimer = setTimeout(() => typingIndicator.classList.add('hidden'), 1500); } return; }
+      if (data.type === 'stoptyping') { if (currentPartner === conn.peer) typingIndicator.classList.add('hidden'); return; }
+      playBeep(); addMessageToHistory(conn.peer, { ...data, sent: false });
     });
-    conn.on('close', () => {
-      delete connections[conn.peer];
-      renderContactList();
-    });
+    conn.on('close', () => { delete connections[conn.peer]; renderContactList(); });
     conn.on('error', () => {});
   }
 
   function renderContactList() {
-    const idsToShow = [...new Set([...savedPartners, ...Object.keys(connections)])];
-    if (idsToShow.length === 0) {
-      contactList.innerHTML = '<p style="color:#555; text-align:center; margin-top:80px;">Nenhum contato. Toque no + para adicionar.</p>';
-      return;
-    }
-    contactList.innerHTML = idsToShow.map(id => {
-      const profile = contactProfiles[id] || { name: id, photo: '' };
-      const lastMsg = chatHistory[id]?.slice(-1)[0];
-      const preview = lastMsg ? (lastMsg.type === 'text' ? lastMsg.content : (lastMsg.type === 'file' ? '📷 Mídia' : '🎤 Áudio')) : '';
-      const time = lastMsg ? new Date(lastMsg.time).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '';
-      const unread = unreadCounts[id] || 0;
-      const isOpen = connections[id] && connections[id].open;
-      const avatarHtml = profile.photo
-        ? `<div class="avatar" style="background-image:url(${profile.photo})"></div>`
-        : `<div class="avatar">${(profile.name || id).charAt(0).toUpperCase()}</div>`;
-      return `<div class="contact-item" data-id="${id}">
-        ${avatarHtml}
-        <div class="contact-info"><div class="contact-name">${profile.name || id}<span class="${isOpen ? 'status-on' : 'status-off'}">${isOpen ? '(online)' : '(off)'}</span></div><div class="last-msg">${preview}</div></div>
-        <div class="contact-meta"><div class="msg-time">${time}</div>${unread ? `<div class="badge">${unread}</div>` : ''}</div>
-      </div>`;
+    const ids = [...new Set([...savedPartners, ...Object.keys(connections)])];
+    if (!ids.length) { contactList.innerHTML = '<p style="color:#555;text-align:center;margin-top:80px;">Nenhum contato.</p>'; return; }
+    contactList.innerHTML = ids.map(id => {
+      const p = contactProfiles[id] || { name: id, photo: '' }, last = chatHistory[id]?.slice(-1)[0];
+      const preview = last ? (last.type==='text'?last.content:(last.type==='file'?'📷 Mídia':'🎤 Áudio')) : '';
+      const time = last ? new Date(last.time).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
+      const unread = unreadCounts[id]||0, online = connections[id]&&connections[id].open;
+      const avt = p.photo ? `<div class="avatar" style="background-image:url(${p.photo})"></div>` : `<div class="avatar">${(p.name||id).charAt(0).toUpperCase()}</div>`;
+      return `<div class="contact-item" data-id="${id}">${avt}<div class="info"><span class="name">${p.name||id}<span class="${online?'status-on':'status-off'}">${online?'(online)':'(off)'}</span></span><div class="preview">${preview}</div></div><div class="meta"><span class="time">${time}</span>${unread?`<span class="badge">${unread}</span>`:''}</div></div>`;
     }).join('');
-
     document.querySelectorAll('.contact-item').forEach(item => {
       item.addEventListener('click', () => openChat(item.dataset.id));
-      let pressTimer;
-      item.addEventListener('touchstart', () => {
-        pressTimer = setTimeout(() => {
-          const pid = item.dataset.id;
-          if (confirm(`Remover ${contactProfiles[pid]?.name || pid}?`)) {
-            if (connections[pid]) connections[pid].close();
-            delete connections[pid];
-            savedPartners = savedPartners.filter(p => p !== pid);
-            delete chatHistory[pid];
-            delete unreadCounts[pid];
-            delete contactProfiles[pid];
-            if (currentPartner === pid) {
-              chatScreen.classList.add('hidden');
-              conversationsScreen.classList.remove('hidden');
-              currentPartner = null;
-            }
-            renderContactList();
-            saveData();
-          }
-        }, 800);
-      });
-      item.addEventListener('touchend', () => clearTimeout(pressTimer));
-      item.addEventListener('touchmove', () => clearTimeout(pressTimer));
-    });
+      let timer; item.addEventListener('touchstart', () => { timer = setTimeout(() => { const pid=item.dataset.id; if(confirm(`Remover ${contactProfiles[pid]?.name||pid}?`)) { if(connections[pid]) connections[pid].close(); delete connections[pid]; savedPartners=savedPartners.filter(p=>p!==pid); delete chatHistory[pid]; delete unreadCounts[pid]; delete contactProfiles[pid]; if(currentPartner===pid){chatScreen.classList.add('hidden');conversationsPanel.classList.remove('hidden');currentPartner=null;} renderContactList(); saveData(); } },800); }); item.addEventListener('touchend',()=>clearTimeout(timer)); item.addEventListener('touchmove',()=>clearTimeout(timer)); });
   }
 
-  function openChat(partnerId) {
-    currentPartner = partnerId;
-    unreadCounts[partnerId] = 0;
-    chatTitle.textContent = contactProfiles[partnerId]?.name || partnerId;
-    conversationsScreen.classList.add('hidden');
-    chatScreen.classList.remove('hidden');
-    typingIndicator.classList.add('hidden');
-    renderChatMessages();
-    messageInput.focus();
-    saveData();
-  }
-
+  function openChat(pid) { currentPartner=pid; unreadCounts[pid]=0; chatTitle.textContent=contactProfiles[pid]?.name||pid; conversationsPanel.classList.add('hidden'); updatesPanel.classList.add('hidden'); communitiesPanel.classList.add('hidden'); callsPanel.classList.add('hidden'); chatScreen.classList.remove('hidden'); typingIndicator.classList.add('hidden'); renderChatMessages(); messageInput.focus(); saveData(); }
   function renderChatMessages() {
     if (!currentPartner) return;
     const msgs = chatHistory[currentPartner] || [];
     chatMessages.innerHTML = msgs.map(m => {
-      const cls = m.sent ? 'sent' : 'received';
-      const time = new Date(m.time).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+      const cls = m.sent ? 'sent' : 'received', time = new Date(m.time).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
       let content = '';
-      if (m.type === 'text') content = m.content;
-      else if (m.type === 'file') {
-        const src = m.content;
-        content = m.mime?.startsWith('image/') ? `<img src="${src}" style="max-width:180px;">` : `<video src="${src}" controls style="max-width:180px;"></video>`;
-      } else if (m.type === 'audio') content = `<audio src="${m.content}" controls style="width:160px;"></audio>`;
+      if (m.type==='text') content = m.content;
+      else if (m.type==='file') { const src=m.content; content = m.mime?.startsWith('image/')?`<img src="${src}" style="max-width:180px;">`:`<video src="${src}" controls style="max-width:180px;"></video>`; }
+      else if (m.type==='audio') content = `<audio src="${m.content}" controls style="width:160px;"></audio><span class="duration">${m.duration ? m.duration + 's' : ''}</span>`;
       return `<div class="message ${cls}"><div>${content}</div><div class="time">${time}</div></div>`;
     }).join('');
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
+  function addMessageToHistory(pid, msg) { if (!chatHistory[pid]) chatHistory[pid] = []; chatHistory[pid].push({ ...msg, time: Date.now() }); if (currentPartner===pid) { renderChatMessages(); unreadCounts[pid]=0; } else unreadCounts[pid]=(unreadCounts[pid]||0)+1; renderContactList(); renderUpdates(); saveData(); }
 
-  function addMessageToHistory(partnerId, msg) {
-    if (!chatHistory[partnerId]) chatHistory[partnerId] = [];
-    chatHistory[partnerId].push({ ...msg, time: Date.now() });
-    if (currentPartner === partnerId) {
-      renderChatMessages();
-      unreadCounts[partnerId] = 0;
-    } else {
-      unreadCounts[partnerId] = (unreadCounts[partnerId] || 0) + 1;
-    }
-    renderContactList();
-    saveData();
-  }
-
-  function sendMessage(type, content, mime) {
+  function sendMessage(type, content, mime, duration) {
     if (!currentPartner) return;
     const conn = connections[currentPartner];
-    if (!conn || !conn.open) {
-      showToast('Sem conexão. Ambos devem ter os números salvos.');
-      return;
-    }
-    const data = { type, content, mime, sender: myId };
-    conn.send(data);
-    addMessageToHistory(currentPartner, { ...data, sent: true });
-  }
-
-  let typingTimeout = null;
-  messageInput.addEventListener('input', () => {
-    if (!currentPartner) return;
-    const conn = connections[currentPartner];
+    const data = { type, content, mime, sender: myId, duration: duration || undefined };
     if (conn && conn.open) {
-      conn.send({ type: 'typing' });
-      clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(() => conn.send({ type: 'stoptyping' }), 1500);
+      conn.send(data); addMessageToHistory(currentPartner, { ...data, sent: true });
+    } else {
+      if (!pendingMessages[currentPartner]) pendingMessages[currentPartner] = [];
+      pendingMessages[currentPartner].push(data);
+      showToast('Mensagem na fila. Será enviada quando parceiro conectar.');
+      saveData();
     }
-  });
+  }
 
-  sendBtn.addEventListener('click', () => {
-    const txt = messageInput.value.trim();
-    if (!txt) return;
-    sendMessage('text', txt);
-    messageInput.value = '';
-  });
-  messageInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendBtn.click(); });
+  sendBtn.addEventListener('click', () => { const t=messageInput.value.trim(); if(!t)return; sendMessage('text',t); messageInput.value=''; });
+  messageInput.addEventListener('keydown', e => { if(e.key==='Enter') sendBtn.click(); });
+  let typingTimeout;
+  messageInput.addEventListener('input', () => { if(!currentPartner)return; const conn=connections[currentPartner]; if(conn&&conn.open){ conn.send({type:'typing'}); clearTimeout(typingTimeout); typingTimeout=setTimeout(()=>conn.send({type:'stoptyping'}),1500); } });
 
   galleryBtn.addEventListener('click', () => fileInput.click());
-  fileInput.addEventListener('change', () => {
-    const file = fileInput.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => sendMessage('file', e.target.result, file.type);
-    reader.readAsDataURL(file);
-    fileInput.value = '';
-  });
+  fileInput.addEventListener('change', () => { const f=fileInput.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>sendMessage('file',e.target.result,f.type); r.readAsDataURL(f); fileInput.value=''; });
 
+  // Áudio com duração
   micBtn.addEventListener('click', async () => {
     if (!recording) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-        audioChunks = [];
-        mediaRecorder.ondataavailable = e => { if (e.data.size) audioChunks.push(e.data); };
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' }); audioChunks = []; audioStartTime = Date.now();
+        mediaRecorder.ondataavailable = e => { if(e.data.size) audioChunks.push(e.data); };
         mediaRecorder.onstop = () => {
-          const blob = new Blob(audioChunks, { type: 'audio/webm' });
-          const reader = new FileReader();
-          reader.onload = () => sendMessage('audio', reader.result, 'audio/webm');
-          reader.readAsDataURL(blob);
-          stream.getTracks().forEach(t => t.stop());
+          const blob = new Blob(audioChunks, { type: 'audio/webm' }); const duration = Math.round((Date.now() - audioStartTime) / 1000);
+          const r = new FileReader(); r.onload = () => sendMessage('audio', r.result, 'audio/webm', duration); r.readAsDataURL(blob);
+          stream.getTracks().forEach(t=>t.stop());
         };
-        mediaRecorder.start();
-        recording = true;
-        micBtn.textContent = '⏹';
-        playBeep();
+        mediaRecorder.start(); recording=true; micBtn.textContent='⏹'; playBeep();
       } catch(e) { showToast('Microfone exige HTTPS.'); }
-    } else {
-      mediaRecorder.stop();
-      recording = false;
-      micBtn.textContent = '🎤';
-    }
+    } else { mediaRecorder.stop(); recording=false; micBtn.textContent='🎤'; }
   });
 
-  async function startCall(video = false) {
-    if (!currentPartner) return;
-    const conn = connections[currentPartner];
-    if (!conn || !conn.open) return showToast('Conexão não disponível');
+  // Chamadas
+  async function startCall(video=false) {
+    if (!currentPartner) return; const conn = connections[currentPartner];
+    if (!conn || !conn.open) return showToast('Parceiro offline. A chamada pode não completar.');
     try {
       localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video });
-      const call = peer.call(currentPartner, localStream, { video });
-      setupCall(call);
+      const call = peer.call(currentPartner, localStream, { video }); setupCall(call, false);
     } catch(e) { showToast('Chamadas exigem HTTPS.'); }
   }
-
-  function setupCall(call) {
-    currentCall = call;
-    activeCallPanel.classList.remove('hidden');
-    callInfo.textContent = call.options.video ? '📹 Chamada de vídeo' : '📞 Chamada de voz';
-    call.on('stream', (remoteStream) => {
-      remoteAudio.srcObject = remoteStream;
-      if (call.options.video) {
-        videoCallContainer.classList.remove('hidden');
-        remoteVideo.srcObject = remoteStream;
-        localVideo.srcObject = localStream;
-      }
+  function setupCall(call, incoming=false) {
+    currentCall = call; activeCallPanel.classList.remove('hidden'); callInfo.textContent = call.options.video ? '📹 Vídeo' : '📞 Voz';
+    if (localVideo) localVideo.srcObject = localStream;
+    call.on('stream', remoteStream => {
+      remoteAudio.srcObject = remoteStream; if (call.options.video) { videoCallContainer.classList.remove('hidden'); remoteVideo.srcObject = remoteStream; }
     });
-    callStartTime = Date.now();
-    callTimerInterval = setInterval(() => {
-      const s = Math.floor((Date.now() - callStartTime)/1000);
-      callTimer.textContent = `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
-    }, 1000);
-    hangupBtn.onclick = () => { call.close(); endCall(); };
-    call.on('close', endCall);
-    call.on('error', endCall);
+    callStartTime = Date.now(); callTimerInterval = setInterval(() => { const s = Math.floor((Date.now()-callStartTime)/1000); callTimer.textContent = `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`; }, 1000);
+    hangupBtn.onclick = () => { call.close(); endCall(); }; call.on('close', () => endCall()); call.on('error', () => endCall());
+    const logEntry = { type: call.options.video ? 'video' : 'voice', partner: call.peer, time: Date.now(), incoming, duration: 0 }; call._log = logEntry;
   }
-
   function endCall() {
-    if (currentCall) currentCall.close();
-    if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
-    clearInterval(callTimerInterval);
-    activeCallPanel.classList.add('hidden');
-    videoCallContainer.classList.add('hidden');
-    remoteAudio.srcObject = null;
-    remoteVideo.srcObject = null;
-    localVideo.srcObject = null;
-    currentCall = null;
+    if (currentCall) { const duration = Math.floor((Date.now() - callStartTime)/1000); if (currentCall._log) { currentCall._log.duration = duration; callLog.unshift(currentCall._log); if (callLog.length > 50) callLog.pop(); saveData(); renderCallLog(); } currentCall.close(); }
+    if (localStream) { localStream.getTracks().forEach(t=>t.stop()); localStream = null; } clearInterval(callTimerInterval); activeCallPanel.classList.add('hidden'); videoCallContainer.classList.add('hidden'); remoteAudio.srcObject = null; remoteVideo.srcObject = null; localVideo.srcObject = null; currentCall = null;
+  }
+  chatVoiceCallBtn.addEventListener('click', ()=>startCall(false)); chatVideoCallBtn.addEventListener('click', ()=>startCall(true));
+
+  // Navegação das abas
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active')); document.querySelector(`.tab-item[data-tab="${tab}"]`).classList.add('active');
+    conversationsPanel.classList.add('hidden'); updatesPanel.classList.add('hidden'); communitiesPanel.classList.add('hidden'); callsPanel.classList.add('hidden'); chatScreen.classList.add('hidden');
+    if (tab==='conversas') conversationsPanel.classList.remove('hidden');
+    else if (tab==='atualizacoes') { updatesPanel.classList.remove('hidden'); renderUpdates(); }
+    else if (tab==='comunidades') communitiesPanel.classList.remove('hidden');
+    else if (tab==='ligacoes') { callsPanel.classList.remove('hidden'); renderCallLog(); }
+  }
+  document.querySelectorAll('.tab-item').forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
+
+  function renderUpdates() {
+    const allMsgs = []; Object.keys(chatHistory).forEach(pid => { chatHistory[pid].forEach(m => allMsgs.push({...m, partnerId: pid})); });
+    allMsgs.sort((a,b)=>b.time-a.time); const recent = allMsgs.slice(0,20);
+    if (!recent.length) { updatesList.innerHTML = '<p style="color:#555;text-align:center;margin-top:80px;">Sem atualizações.</p>'; return; }
+    updatesList.innerHTML = recent.map(m => {
+      const p = contactProfiles[m.partnerId] || { name: m.partnerId }, time = new Date(m.time).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      return `<div class="contact-item"><div class="avatar">${(p.name||m.partnerId).charAt(0).toUpperCase()}</div><div class="info"><span class="name">${p.name||m.partnerId}</span><div class="preview">${m.type==='text'?m.content:(m.type==='file'?'📷 Mídia':'🎤 Áudio')}</div></div><div class="meta"><span class="time">${time}</span></div></div>`;
+    }).join('');
   }
 
-  chatVoiceCallBtn.addEventListener('click', () => startCall(false));
-  chatVideoCallBtn.addEventListener('click', () => startCall(true));
-
-  document.querySelectorAll('.tab-item').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelector('.tab-item.active').classList.remove('active');
-      tab.classList.add('active');
-      if (tab.dataset.tab !== 'conversas') showToast('Em breve!');
-    });
+  sendBroadcastBtn.addEventListener('click', () => {
+    const text = broadcastInput.value.trim(); if (!text) return;
+    const online = Object.keys(connections).filter(id => connections[id].open);
+    if (!online.length) return showToast('Nenhum parceiro online.');
+    online.forEach(id => { connections[id].send({ type: 'text', content: text, sender: myId }); addMessageToHistory(id, { type: 'text', content: text, sent: true }); });
+    broadcastStatus.innerHTML = `<p style="color:#25d366;text-align:center;">Mensagem enviada para ${online.length} parceiro(s).</p>`; broadcastInput.value = '';
   });
 
-  backBtn.addEventListener('click', () => {
-    chatScreen.classList.add('hidden');
-    conversationsScreen.classList.remove('hidden');
-    currentPartner = null;
-    renderContactList();
-  });
-
-  settingsToggle.addEventListener('click', () => settingsModal.classList.remove('hidden'));
-  closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
-
-  function applyBackground() {
-    const chatArea = document.querySelector('.chat-area');
-    if (!chatArea) return;
-    const savedColor = localStorage.getItem('chatBgColor');
-    const savedImage = localStorage.getItem('chatBgImage');
-    if (savedImage) chatArea.style.background = `url(${savedImage}) center/cover`;
-    else if (savedColor) chatArea.style.background = savedColor;
-    else chatArea.style.background = `#e5ddd5 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M30 30 L70 70 M70 30 L30 70" stroke="rgba(0,0,0,0.08)" stroke-width="2"/></svg>') repeat`;
+  function renderCallLog() {
+    if (!callLog.length) { callLogList.innerHTML = '<p style="color:#555;text-align:center;margin-top:80px;">Nenhuma chamada.</p>'; return; }
+    callLogList.innerHTML = callLog.map(log => {
+      const p = contactProfiles[log.partner] || { name: log.partner }, icon = log.type==='video'?'📹':'📞';
+      const time = new Date(log.time).toLocaleString('pt-BR',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'});
+      const dur = `${String(Math.floor(log.duration/60)).padStart(2,'0')}:${String(log.duration%60).padStart(2,'0')}`;
+      return `<div class="log-item"><div class="avatar">${icon}</div><div class="info"><span class="name">${p.name||log.partner}</span><div class="preview">${log.incoming?'Recebida':'Feita'} · ${time}</div></div><div class="meta"><span class="time">${dur}</span></div></div>`;
+    }).join('');
   }
 
-  bgColorPicker.addEventListener('input', (e) => { localStorage.setItem('chatBgColor', e.target.value); localStorage.removeItem('chatBgImage'); applyBackground(); });
-  bgImageInput.addEventListener('change', (e) => {
-    const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => { localStorage.setItem('chatBgImage', ev.target.result); localStorage.removeItem('chatBgColor'); applyBackground(); };
-    reader.readAsDataURL(file);
-  });
-  resetBgBtn.addEventListener('click', () => { localStorage.removeItem('chatBgColor'); localStorage.removeItem('chatBgImage'); applyBackground(); });
+  backBtn.addEventListener('click', () => { chatScreen.classList.add('hidden'); conversationsPanel.classList.remove('hidden'); currentPartner=null; renderContactList(); });
+  settingsToggle.addEventListener('click', ()=>settingsModal.classList.remove('hidden')); closeSettingsBtn.addEventListener('click', ()=>settingsModal.classList.add('hidden'));
+  function applyBackground() { const a=document.querySelector('.chat-area'); if(!a)return; const c=localStorage.getItem('chatBgColor'),i=localStorage.getItem('chatBgImage'); if(i)a.style.background=`url(${i}) center/cover`; else if(c)a.style.background=c; else a.style.background=`#e5ddd5 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M30 30 L70 70 M70 30 L30 70" stroke="rgba(0,0,0,0.08)" stroke-width="2"/></svg>') repeat`; }
+  bgColorPicker.addEventListener('input', e=>{ localStorage.setItem('chatBgColor',e.target.value); localStorage.removeItem('chatBgImage'); applyBackground(); });
+  bgImageInput.addEventListener('change', e=>{ const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=ev=>{ localStorage.setItem('chatBgImage',ev.target.result); localStorage.removeItem('chatBgColor'); applyBackground(); }; r.readAsDataURL(f); });
+  resetBgBtn.addEventListener('click', ()=>{ localStorage.removeItem('chatBgColor'); localStorage.removeItem('chatBgImage'); applyBackground(); });
 
-  window.addEventListener('load', () => {
-    loadData();
-    checkFirstTime();
-  });
-  window.addEventListener('beforeunload', () => {
-    if (currentCall) currentCall.close();
-    Object.values(connections).forEach(c => c.close());
-    if (peer) peer.destroy();
-    saveData();
-  });
+  window.addEventListener('load', ()=>{ loadData(); checkFirstTime(); });
+  window.addEventListener('beforeunload', ()=>{ if(currentCall)currentCall.close(); Object.values(connections).forEach(c=>c.close()); if(peer)peer.destroy(); saveData(); });
 </script>
 </body>
-    </html>
+                                   </html>
