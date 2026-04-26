@@ -181,12 +181,12 @@
     </div>
   </div>
 
-  <!-- Modal de primeiro acesso (apenas número) -->
+  <!-- Modal de primeiro acesso (apenas DDD+número) -->
   <div id="firstTimeModal" class="modal hidden">
     <div class="modal-content">
       <h2 style="color:white;">Bem-vindo ao Chat Zap</h2>
-      <p style="color:#ccc; font-size:13px;">Digite seu número (com DDD). Será seu ID único.</p>
-      <input type="tel" id="myNumberInput" placeholder="Ex.: 5584999999999">
+      <p style="color:#ccc; font-size:13px;">Digite seu número com DDD (sem o 55).</p>
+      <input type="tel" id="myNumberInput" placeholder="Ex.: 84999999999">
       <div class="modal-buttons">
         <button class="btn" id="saveMyNumberBtn">Entrar</button>
       </div>
@@ -198,7 +198,7 @@
     <div class="modal-content">
       <h2 style="color:white;">Adicionar parceiro</h2>
       <input type="text" id="newPartnerName" placeholder="Nome do parceiro">
-      <input type="tel" id="newPartnerNumber" placeholder="Número (com DDD)">
+      <input type="tel" id="newPartnerNumber" placeholder="DDD + número (sem 55)">
       <div style="display:flex; align-items:center; gap:8px;">
         <button class="btn-outline" id="selectPhotoBtn">📷 Foto</button>
         <input type="file" id="partnerPhotoInput" accept="image/*" class="hidden">
@@ -211,7 +211,7 @@
     </div>
   </div>
 
-  <!-- Configurações de fundo (sem reset) -->
+  <!-- Configurações de fundo -->
   <div id="settingsModal" class="modal hidden">
     <div class="modal-content">
       <h2 style="color:white;">Personalizar fundo</h2>
@@ -332,6 +332,13 @@
   let partnerPhotoData = null;
   let typingTimer = null;
 
+  // Converte DDD+número (ex.: 84999999999) para formato completo 55xxxx
+  function fullNumber(local) {
+    const digits = local.replace(/\D/g, '');
+    if (digits.startsWith('55')) return digits;
+    return '55' + digits;
+  }
+
   // ===== PERSISTÊNCIA =====
   function saveData() {
     localStorage.setItem('p2p_chatHistory', JSON.stringify(chatHistory));
@@ -349,12 +356,10 @@
     } catch(e) {}
   }
 
-  // Autolimpeza de dados antigos (não numéricos)
   function isNumeric(str) { return /^\d+$/.test(str); }
   function resetIfOldData() {
     const storedId = localStorage.getItem('p2p_myId');
     if (storedId && !isNumeric(storedId)) {
-      // Dados antigos com nome → limpar tudo
       localStorage.clear();
       return true;
     }
@@ -402,16 +407,14 @@
 
   // ===== PRIMEIRO ACESSO =====
   function checkFirstTime() {
-    if (resetIfOldData()) {
-      // Dados antigos limpos, forçar novo cadastro
-    }
+    if (resetIfOldData()) { /* dados antigos limpos */ }
     myId = localStorage.getItem('p2p_myId');
     if (!myId) {
       firstTimeModal.classList.remove('hidden');
       saveMyNumberBtn.onclick = () => {
-        const number = myNumberInput.value.trim();
-        if (!number || !isNumeric(number)) return showToast('Digite apenas números (com DDD)');
-        myId = number;
+        const local = myNumberInput.value.trim();
+        if (!local || !/^\d+$/.test(local)) return showToast('Digite apenas números (DDD + número)');
+        myId = fullNumber(local);
         localStorage.setItem('p2p_myId', myId);
         firstTimeModal.classList.add('hidden');
         initPeer();
@@ -440,7 +443,6 @@
     peer.on('open', (id) => {
       myId = id;
       console.log('Meu ID:', id);
-      // Reconectar parceiros salvos
       if (savedPartners.length > 0) {
         savedPartners.forEach(pid => {
           if (!connections[pid]) {
@@ -484,10 +486,11 @@
     peer.on('error', (e) => showToast('Erro: ' + e.message));
   }
 
-  function addPartner(name, number) {
+  function addPartner(name, localNumber) {
+    const number = fullNumber(localNumber);
     if (!number || number === myId) return;
     if (!peer || !peer.id) {
-      setTimeout(() => addPartner(name, number), 1000);
+      setTimeout(() => addPartner(name, localNumber), 1000);
       return;
     }
     const pid = number;
@@ -513,9 +516,9 @@
   cancelAddBtn.addEventListener('click', () => addPartnerModal.classList.add('hidden'));
   confirmAddBtn.addEventListener('click', () => {
     const name = newPartnerName.value.trim();
-    const number = newPartnerNumber.value.trim();
-    if (!name || !number) return showToast('Preencha nome e número');
-    addPartner(name, number);
+    const localNumber = newPartnerNumber.value.trim();
+    if (!name || !localNumber) return showToast('Preencha nome e número (DDD + número)');
+    addPartner(name, localNumber);
     addPartnerModal.classList.add('hidden');
   });
 
@@ -805,4 +808,4 @@
   });
 </script>
 </body>
-  </html>
+    </html>
