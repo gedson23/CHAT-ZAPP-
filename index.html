@@ -184,7 +184,7 @@
   <!-- Modal de primeiro acesso (apenas número) -->
   <div id="firstTimeModal" class="modal hidden">
     <div class="modal-content">
-      <h2 style="color:white;">Bem-vindo</h2>
+      <h2 style="color:white;">Bem-vindo ao Chat Zap</h2>
       <p style="color:#ccc; font-size:13px;">Digite seu número (com DDD). Será seu ID único.</p>
       <input type="tel" id="myNumberInput" placeholder="Ex.: 5584999999999">
       <div class="modal-buttons">
@@ -349,6 +349,18 @@
     } catch(e) {}
   }
 
+  // Autolimpeza de dados antigos (não numéricos)
+  function isNumeric(str) { return /^\d+$/.test(str); }
+  function resetIfOldData() {
+    const storedId = localStorage.getItem('p2p_myId');
+    if (storedId && !isNumeric(storedId)) {
+      // Dados antigos com nome → limpar tudo
+      localStorage.clear();
+      return true;
+    }
+    return false;
+  }
+
   // ===== EMOJIS =====
   const EMOJIS = ['😀','😂','❤️','😍','😭','😘','😊','🤔','😅','😢','👍','🙏','💪','🔥','✨','🎉','😱','👀','💔','😎','🤗','🤣','😋','😇','😜','😌','😈','💋','💖','💗','💘','💝','🎂','☀️','🌙','☕','🍕','🎸','⚽','🚗','✈️','🌟','🐶','🐱','🌸','🌺','🍀'];
   function buildEmojiPanel() {
@@ -390,12 +402,15 @@
 
   // ===== PRIMEIRO ACESSO =====
   function checkFirstTime() {
+    if (resetIfOldData()) {
+      // Dados antigos limpos, forçar novo cadastro
+    }
     myId = localStorage.getItem('p2p_myId');
     if (!myId) {
       firstTimeModal.classList.remove('hidden');
       saveMyNumberBtn.onclick = () => {
         const number = myNumberInput.value.trim();
-        if (!number) return showToast('Digite seu número');
+        if (!number || !isNumeric(number)) return showToast('Digite apenas números (com DDD)');
         myId = number;
         localStorage.setItem('p2p_myId', myId);
         firstTimeModal.classList.add('hidden');
@@ -461,7 +476,7 @@
           call.answer(localStream);
           setupCall(call);
           incomingCallPanel.classList.add('hidden');
-        } catch(e) { showToast('Permissão negada (precisa HTTPS).'); }
+        } catch(e) { showToast('Permissão negada (verifique HTTPS).'); }
       };
       rejectCallBtn.onclick = () => { call.close(); incomingCallPanel.classList.add('hidden'); };
     });
@@ -485,6 +500,7 @@
     setupConn(conn);
     renderContactList();
     saveData();
+    showToast(`${name || pid} adicionado(a).`);
   }
 
   addContactFab.addEventListener('click', () => {
@@ -629,7 +645,7 @@
     if (!currentPartner) return;
     const conn = connections[currentPartner];
     if (!conn || !conn.open) {
-      showToast('Sem conexão. Ambos devem adicionar o número um do outro.');
+      showToast('Sem conexão. Ambos devem ter os números salvos.');
       return;
     }
     const data = { type, content, mime, sender: myId };
