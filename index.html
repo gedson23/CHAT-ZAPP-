@@ -7,53 +7,25 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
+      height: 100%; width: 100%; overflow: hidden;
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: #121212;
-      color: #e0e0e0;
+      background: #121212; color: #e0e0e0;
     }
     .app {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: flex;
-      flex-direction: column;
-      background: #111;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; flex-direction: column; background: #111;
     }
 
     .top-bar {
-      background: #075e54;
-      color: white;
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-weight: 500;
-      flex-shrink: 0;
+      background: #075e54; color: white; padding: 10px 16px;
+      display: flex; align-items: center; gap: 12px; font-weight: 500; flex-shrink: 0;
     }
     .top-bar h1 { flex: 1; font-size: 18px; }
     .top-bar .icon-btn { background: none; border: none; color: white; font-size: 22px; cursor: pointer; }
 
-    .main-content {
-      flex: 1;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .conversations-panel {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      background: #121212;
-    }
-    .contact-list {
-      flex: 1;
-      overflow-y: auto;
-    }
+    .main-content { flex: 1; overflow: hidden; position: relative; }
+    .conversations-panel { height: 100%; display: flex; flex-direction: column; background: #121212; }
+    .contact-list { flex: 1; overflow-y: auto; }
     .contact-item {
       display: flex; align-items: center; padding: 12px 16px;
       border-bottom: 1px solid #1c1c1c; cursor: pointer; transition: 0.1s; user-select: none;
@@ -63,6 +35,7 @@
       width: 50px; height: 50px; border-radius: 50%; background: #4a4a4a;
       display: flex; align-items: center; justify-content: center;
       font-size: 22px; color: white; margin-right: 14px; flex-shrink: 0;
+      background-size: cover; background-position: center;
     }
     .contact-info { flex: 1; min-width: 0; }
     .contact-name { font-size: 16px; color: #e0e0e0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -75,98 +48,60 @@
     }
 
     .fab {
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      background: #25d366;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 56px;
-      height: 56px;
-      font-size: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-      cursor: pointer;
-      z-index: 10;
+      position: absolute; bottom: 15px; right: 15px;
+      background: #25d366; color: white; border: none; border-radius: 50%;
+      width: 52px; height: 52px; font-size: 28px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; z-index: 10;
     }
 
-    .screen-chat {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
+    .screen-chat { height: 100%; display: flex; flex-direction: column; }
     .header-chat {
-      background: #075e54; color: white; padding: 10px 12px;
-      display: flex; align-items: center; gap: 12px;
-      flex-shrink: 0;
+      background: #075e54; color: white; padding: 8px 12px;
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
     }
-    .back-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
-    .header-chat .contact-name { flex: 1; font-size: 17px; font-weight: 500; }
+    .back-btn { background: none; border: none; color: white; font-size: 22px; cursor: pointer; }
+    .header-chat .contact-name { flex: 1; font-size: 16px; font-weight: 500; }
+    .typing-indicator {
+      font-size: 11px; color: #b2dfdb; margin-left: 10px;
+    }
     .chat-icons { display: flex; gap: 16px; }
     .chat-area {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+      flex: 1; overflow-y: auto; padding: 10px;
+      display: flex; flex-direction: column; gap: 4px;
       background: #e5ddd5 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M30 30 L70 70 M70 30 L30 70" stroke="rgba(0,0,0,0.08)" stroke-width="2"/></svg>') repeat;
     }
     .message {
-      max-width: 80%; padding: 7px 10px; border-radius: 8px;
-      font-size: 14px; line-height: 1.4; word-wrap: break-word;
+      max-width: 80%; padding: 6px 10px; border-radius: 8px;
+      font-size: 13px; line-height: 1.4; word-wrap: break-word;
       position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.1);
     }
     .message.sent { background: #dcf8c6; color: #111; align-self: flex-end; border-top-right-radius: 2px; }
     .message.received { background: white; color: #111; align-self: flex-start; border-top-left-radius: 2px; }
-    .message .time { font-size: 10px; color: #666; text-align: right; margin-top: 4px; }
-    .message img, .message video { max-width: 200px; border-radius: 4px; margin-top: 4px; }
-    .message audio { width: 180px; margin-top: 4px; }
+    .message .time { font-size: 10px; color: #666; text-align: right; margin-top: 3px; }
+    .message img, .message video { max-width: 180px; border-radius: 4px; margin-top: 4px; }
+    .message audio { width: 160px; margin-top: 4px; }
 
     .input-bar {
-      background: #f0f0f0;
-      padding: 8px 12px;
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      border-top: 1px solid #ccc;
-      flex-shrink: 0;
+      background: #f0f0f0; padding: 6px 10px; display: flex; gap: 6px;
+      align-items: center; border-top: 1px solid #ccc; flex-shrink: 0;
     }
     .input-bar input {
-      flex: 1;
-      min-width: 100px;
-      border: none;
-      border-radius: 25px;
-      padding: 10px 16px;
-      outline: none;
-      font-size: 14px;
-      background: white;
+      flex: 1; min-width: 80px; border: none; border-radius: 20px;
+      padding: 8px 14px; outline: none; font-size: 14px; background: white;
     }
-    .action-btn { background: none; border: none; font-size: 22px; cursor: pointer; color: #777; }
+    .action-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #777; }
 
     .tab-bar {
-      background: #1e1e1e;
-      display: flex;
-      border-top: 1px solid #333;
-      flex-shrink: 0;
+      background: #1e1e1e; display: flex; border-top: 1px solid #333; flex-shrink: 0;
+      padding: 4px 0;
     }
     .tab-item {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 0;
-      color: #888;
-      font-size: 12px;
-      cursor: pointer;
-      transition: 0.2s;
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 4px 0; color: #888; font-size: 10px; cursor: pointer; transition: 0.2s;
     }
+    .tab-item span { font-size: 18px; }
     .tab-item.active { color: #25d366; }
-    .tab-item span { font-size: 20px; }
 
     .hidden { display: none !important; }
 
@@ -178,27 +113,35 @@
       background: #222; padding: 20px; border-radius: 16px; width: 90%;
       display: flex; flex-direction: column; gap: 12px;
     }
-    .modal-content input { background: #333; border: none; color: white; padding: 10px; border-radius: 10px; outline: none; }
+    .modal-content input { background: #333; border: none; color: white; padding: 10px; border-radius: 10px; outline: none; font-size: 14px; }
     .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
-    .btn { background: #25d366; border: none; color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
+    .btn { background: #25d366; border: none; color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-size: 14px; }
     .btn-outline { background: transparent; border: 1px solid #25d366; color: #25d366; }
+    .btn-danger { background: #e74c3c; color: white; }
 
     .toast {
       position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%);
-      background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px;
+      background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px;
       z-index: 40; transition: 0.3s; opacity: 0;
     }
     .toast.show { opacity: 1; }
 
     .emoji-panel {
-      display: flex; flex-wrap: wrap; gap: 8px; padding: 10px;
+      display: flex; flex-wrap: wrap; gap: 8px; padding: 8px;
       background: #f0f0f0; border-top: 1px solid #ccc;
     }
-    .emoji-btn {
-      background: none; border: none; font-size: 24px; cursor: pointer; padding: 4px;
-    }
+    .emoji-btn { background: none; border: none; font-size: 22px; cursor: pointer; padding: 4px; }
     .status-on { color: #25d366; font-size: 12px; margin-left: 6px; }
     .status-off { color: #ff6b6b; font-size: 12px; margin-left: 6px; }
+
+    .call-video-container {
+      position: relative; width: 100%; background: #000; border-radius: 10px; overflow: hidden; margin-bottom: 10px;
+    }
+    .remote-video { width: 100%; max-height: 200px; object-fit: cover; }
+    .local-video {
+      position: absolute; bottom: 8px; right: 8px; width: 70px; height: 55px;
+      border-radius: 6px; border: 2px solid white; object-fit: cover;
+    }
   </style>
 </head>
 <body>
@@ -220,6 +163,7 @@
       <div class="header-chat">
         <button class="back-btn" id="backBtn">←</button>
         <span class="contact-name" id="chatTitle">Contato</span>
+        <span id="typingIndicator" class="typing-indicator hidden">digitando...</span>
         <div class="chat-icons">
           <button class="action-btn" id="chatVoiceCallBtn" style="color:white;">📞</button>
           <button class="action-btn" id="chatVideoCallBtn" style="color:white;">📹</button>
@@ -240,27 +184,38 @@
     </div>
   </div>
 
-  <!-- Modais -->
-  <div id="activeCallPanel" class="hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1e1e1e; padding:20px; border-radius:16px; text-align:center; z-index:30;">
-    <div id="callInfo">Chamada...</div>
-    <div id="callTimer" style="font-size:18px; margin:10px;">00:00</div>
-    <button id="hangupBtn" style="background:#e74c3c; border:none; color:white; padding:10px 20px; border-radius:20px;">📴 Encerrar</button>
+  <!-- Modal de primeiro acesso -->
+  <div id="firstTimeModal" class="modal hidden">
+    <div class="modal-content">
+      <h2 style="color:white;">Bem-vindo ao Chat Zap</h2>
+      <p style="color:#aaa; font-size:12px;">Para chamadas funcionarem, use HTTPS (ex.: GitHub Pages).</p>
+      <input type="text" id="myNameInput" placeholder="Seu nome">
+      <input type="tel" id="myNumberInput" placeholder="Número (ex.: 5584999999999)">
+      <div class="modal-buttons">
+        <button class="btn" id="saveMyNumberBtn">Entrar</button>
+      </div>
+    </div>
   </div>
-  <div id="incomingCallPanel" class="hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1e1e1e; padding:20px; border-radius:16px; text-align:center; z-index:30;">
-    <p><span id="incomingCallerId"></span> está ligando...</p>
-    <button id="acceptCallBtn" style="background:#25d366; border:none; color:white; padding:10px 20px; border-radius:20px; margin:5px;">✅ Atender</button>
-    <button id="rejectCallBtn" style="background:#e74c3c; border:none; color:white; padding:10px 20px; border-radius:20px;">❌ Recusar</button>
-  </div>
+
+  <!-- Modal de adicionar parceiro -->
   <div id="addPartnerModal" class="modal hidden">
     <div class="modal-content">
       <h2 style="color:white;">Adicionar parceiro</h2>
-      <input type="text" id="newPartnerInput" placeholder="ID do parceiro">
+      <input type="text" id="newPartnerName" placeholder="Nome do parceiro">
+      <input type="tel" id="newPartnerNumber" placeholder="Número (com DDD)">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button class="btn-outline" id="selectPhotoBtn">📷 Foto</button>
+        <input type="file" id="partnerPhotoInput" accept="image/*" class="hidden">
+        <span id="photoName" style="color:#aaa; font-size:12px;"></span>
+      </div>
       <div class="modal-buttons">
         <button class="btn-outline" id="cancelAddBtn">Cancelar</button>
         <button class="btn" id="confirmAddBtn">Adicionar</button>
       </div>
     </div>
   </div>
+
+  <!-- Configurações e Reset -->
   <div id="settingsModal" class="modal hidden">
     <div class="modal-content">
       <h2 style="color:white;">Personalizar fundo</h2>
@@ -270,15 +225,38 @@
         <button class="btn-outline" id="resetBgBtn">Limpar</button>
         <button class="btn" id="closeSettingsBtn">OK</button>
       </div>
+      <hr style="border-color:#444; margin:12px 0;">
+      <button class="btn btn-danger" id="resetAppBtn">🔄 Recomeçar (apagar tudo)</button>
+      <p style="color:#aaa; font-size:11px;">Isso limpará seus dados e contatos.</p>
     </div>
   </div>
+
+  <!-- Chamada ativa -->
+  <div id="activeCallPanel" class="hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1e1e1e; padding:20px; border-radius:16px; text-align:center; z-index:30; min-width:250px;">
+    <div id="callInfo">Chamada...</div>
+    <div id="callTimer" style="font-size:18px; margin:10px;">00:00</div>
+    <audio id="remoteAudio" autoplay style="display:none;"></audio>
+    <div id="videoCallContainer" class="call-video-container hidden">
+      <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
+      <video id="localVideo" class="local-video" autoplay playsinline muted></video>
+    </div>
+    <button id="hangupBtn" style="background:#e74c3c; border:none; color:white; padding:10px 20px; border-radius:20px; font-size:16px;">📴 Encerrar</button>
+  </div>
+
+  <!-- Chamada recebida -->
+  <div id="incomingCallPanel" class="hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1e1e1e; padding:20px; border-radius:16px; text-align:center; z-index:30;">
+    <p><span id="incomingCallerId"></span> está ligando...</p>
+    <button id="acceptCallBtn" style="background:#25d366; border:none; color:white; padding:10px 20px; border-radius:20px; margin:5px;">✅ Atender</button>
+    <button id="rejectCallBtn" style="background:#e74c3c; border:none; color:white; padding:10px 20px; border-radius:20px;">❌ Recusar</button>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <div class="tab-bar">
-    <div class="tab-item active" data-tab="conversas"><span>💬</span><span style="font-size:10px;">Conversas</span></div>
-    <div class="tab-item" data-tab="atualizacoes"><span>📢</span><span style="font-size:10px;">Atualizações</span></div>
-    <div class="tab-item" data-tab="comunidades"><span>👥</span><span style="font-size:10px;">Comunidades</span></div>
-    <div class="tab-item" data-tab="ligacoes"><span>📞</span><span style="font-size:10px;">Ligações</span></div>
+    <div class="tab-item active" data-tab="conversas"><span>💬</span>Conversas</div>
+    <div class="tab-item" data-tab="atualizacoes"><span>📢</span>Atualiz.</div>
+    <div class="tab-item" data-tab="comunidades"><span>👥</span>Comuni.</div>
+    <div class="tab-item" data-tab="ligacoes"><span>📞</span>Ligações</div>
   </div>
 </div>
 
@@ -297,13 +275,14 @@
     } catch(e) {}
   }
 
-  // ===== ELEMENTOS DA UI =====
+  // ===== ELEMENTOS =====
   const $ = (id) => document.getElementById(id);
   const conversationsScreen = $('conversationsScreen');
   const chatScreen = $('chatScreen');
   const contactList = $('contactList');
   const chatMessages = $('chatMessages');
   const chatTitle = $('chatTitle');
+  const typingIndicator = $('typingIndicator');
   const backBtn = $('backBtn');
   const messageInput = $('messageInput');
   const sendBtn = $('sendBtn');
@@ -318,13 +297,21 @@
   const chatVideoCallBtn = $('chatVideoCallBtn');
   const addContactFab = $('addContactFab');
   const addPartnerModal = $('addPartnerModal');
-  const newPartnerInput = $('newPartnerInput');
+  const newPartnerName = $('newPartnerName');
+  const newPartnerNumber = $('newPartnerNumber');
+  const selectPhotoBtn = $('selectPhotoBtn');
+  const partnerPhotoInput = $('partnerPhotoInput');
+  const photoName = $('photoName');
   const cancelAddBtn = $('cancelAddBtn');
   const confirmAddBtn = $('confirmAddBtn');
   const activeCallPanel = $('activeCallPanel');
   const incomingCallPanel = $('incomingCallPanel');
   const callInfo = $('callInfo');
   const callTimer = $('callTimer');
+  const remoteAudio = $('remoteAudio');
+  const remoteVideo = $('remoteVideo');
+  const localVideo = $('localVideo');
+  const videoCallContainer = $('videoCallContainer');
   const hangupBtn = $('hangupBtn');
   const acceptCallBtn = $('acceptCallBtn');
   const rejectCallBtn = $('rejectCallBtn');
@@ -335,29 +322,42 @@
   const bgImageInput = $('bgImageInput');
   const resetBgBtn = $('resetBgBtn');
   const closeSettingsBtn = $('closeSettingsBtn');
+  const resetAppBtn = $('resetAppBtn');
   const toast = $('toast');
+  const firstTimeModal = $('firstTimeModal');
+  const myNameInput = $('myNameInput');
+  const myNumberInput = $('myNumberInput');
+  const saveMyNumberBtn = $('saveMyNumberBtn');
 
-  // ===== VARIÁVEIS GLOBAIS =====
-  let peer, myId = '';
-  let connections = {};       // { partnerId: DataConnection }
-  let chatHistory = {};      // { partnerId: [ { type, content, time, sent } ] }
-  let unreadCounts = {};     // { partnerId: number }
+  // ===== VARIÁVEIS =====
+  let peer, myId = '', myName = '';
+  let connections = {};
+  let chatHistory = {};
+  let unreadCounts = {};
+  let contactProfiles = {};
   let currentPartner = null;
   let mediaRecorder, audioChunks = [], recording = false;
   let currentCall = null, localStream = null;
   let callStartTime = null, callTimerInterval = null;
+  let savedPartners = [];
+  let partnerPhotoData = null;
+  let typingTimer = null;
 
   // ===== PERSISTÊNCIA =====
   function saveData() {
     localStorage.setItem('p2p_chatHistory', JSON.stringify(chatHistory));
     localStorage.setItem('p2p_unreadCounts', JSON.stringify(unreadCounts));
-    localStorage.setItem('p2p_savedPartners', JSON.stringify(Object.keys(connections)));
+    localStorage.setItem('p2p_savedPartners', JSON.stringify(savedPartners));
+    localStorage.setItem('p2p_contactProfiles', JSON.stringify(contactProfiles));
+    localStorage.setItem('p2p_myId', myId);
+    localStorage.setItem('p2p_myName', myName);
   }
-
   function loadData() {
     try {
       chatHistory = JSON.parse(localStorage.getItem('p2p_chatHistory') || '{}');
       unreadCounts = JSON.parse(localStorage.getItem('p2p_unreadCounts') || '{}');
+      savedPartners = JSON.parse(localStorage.getItem('p2p_savedPartners') || '[]');
+      contactProfiles = JSON.parse(localStorage.getItem('p2p_contactProfiles') || '{}');
     } catch(e) {}
   }
 
@@ -389,24 +389,50 @@
     cameraInput.value = '';
   });
 
-  // ===== CONEXÃO (SIMPLES) =====
+  // ===== FOTO DO PARCEIRO =====
+  selectPhotoBtn.addEventListener('click', () => partnerPhotoInput.click());
+  partnerPhotoInput.addEventListener('change', () => {
+    const file = partnerPhotoInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      partnerPhotoData = e.target.result;
+      photoName.textContent = 'Foto selecionada';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // ===== PRIMEIRO ACESSO =====
+  function checkFirstTime() {
+    myId = localStorage.getItem('p2p_myId');
+    myName = localStorage.getItem('p2p_myName') || '';
+    if (!myId) {
+      firstTimeModal.classList.remove('hidden');
+      saveMyNumberBtn.onclick = () => {
+        const name = myNameInput.value.trim();
+        const number = myNumberInput.value.trim();
+        if (!name || !number) return showToast('Preencha nome e número');
+        myName = name;
+        myId = number;
+        localStorage.setItem('p2p_myId', myId);
+        localStorage.setItem('p2p_myName', myName);
+        firstTimeModal.classList.add('hidden');
+        initPeer();
+        applyBackground();
+        renderContactList();
+      };
+    } else {
+      initPeer();
+      applyBackground();
+      renderContactList();
+    }
+  }
+
+  // ===== CONEXÃO =====
   function showToast(msg) {
     toast.textContent = msg;
     toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 2000);
-  }
-
-  function initializeApp() {
-    loadData();
-    let savedId = localStorage.getItem('p2p_myId');
-    if (!savedId) {
-      savedId = prompt('Defina seu ID (ex.: Joao):');
-      if (!savedId) return;
-      localStorage.setItem('p2p_myId', savedId);
-    }
-    myId = savedId;
-    initPeer();
-    applyBackground();
+    setTimeout(() => toast.classList.remove('show'), 2500);
   }
 
   function initPeer() {
@@ -418,27 +444,36 @@
     peer.on('open', (id) => {
       myId = id;
       console.log('Meu ID:', id);
-      localStorage.setItem('p2p_myId', id);
-      // Restaura os contatos salvos (apenas exibe, sem forçar reconexão)
-      renderContactList();
+      if (savedPartners.length > 0) {
+        setTimeout(() => {
+          savedPartners.forEach(pid => {
+            if (!connections[pid]) {
+              const conn = peer.connect(pid, { reliable: true });
+              connections[pid] = conn;
+              setupConn(conn);
+            }
+          });
+          renderContactList();
+          saveData();
+        }, 1500);
+      }
     });
 
     peer.on('connection', (incomingConn) => {
       const partnerId = incomingConn.peer;
-      console.log('Recebendo conexão de:', partnerId);
-      // Se já existe uma conexão com esse parceiro, fecha a nova (mantém a existente)
-      if (connections[partnerId]) {
-        incomingConn.close();
-        return;
-      }
+      console.log('Conexão recebida de:', partnerId);
+      if (connections[partnerId]) connections[partnerId].close();
       connections[partnerId] = incomingConn;
+      if (!savedPartners.includes(partnerId)) {
+        savedPartners.push(partnerId);
+      }
       setupConn(incomingConn);
       renderContactList();
       saveData();
     });
 
     peer.on('call', (call) => {
-      incomingCallerId.textContent = call.peer;
+      incomingCallerId.textContent = contactProfiles[call.peer]?.name || call.peer;
       incomingCallPanel.classList.remove('hidden');
       acceptCallBtn.onclick = async () => {
         try {
@@ -446,7 +481,9 @@
           call.answer(localStream);
           setupCall(call);
           incomingCallPanel.classList.add('hidden');
-        } catch(e) { alert('Erro ao acessar mídia: ' + e.message); }
+        } catch(e) {
+          showToast('Permissão negada. Verifique HTTPS e configurações.');
+        }
       };
       rejectCallBtn.onclick = () => { call.close(); incomingCallPanel.classList.add('hidden'); };
     });
@@ -454,70 +491,89 @@
     peer.on('error', (e) => showToast('Erro Peer: ' + e.message));
   }
 
-  function addPartner(partnerId) {
-    if (!partnerId || connections[partnerId]) return;
+  function addPartner(name, number) {
+    if (!number || number === myId) return;
     if (!peer || !peer.id) {
-      showToast('Aguardando ID...');
-      setTimeout(() => addPartner(partnerId), 1000);
+      setTimeout(() => addPartner(name, number), 1000);
       return;
     }
-    const conn = peer.connect(partnerId, { reliable: true });
-    connections[partnerId] = conn;
+    const pid = number;
+    contactProfiles[pid] = { name: name || pid, photo: partnerPhotoData || '', number: pid };
+    if (!savedPartners.includes(pid)) savedPartners.push(pid);
+    partnerPhotoData = null;
+    if (connections[pid]) return;
+    const conn = peer.connect(pid, { reliable: true });
+    connections[pid] = conn;
     setupConn(conn);
     renderContactList();
     saveData();
-    showToast(`${partnerId} adicionado. Aguardando conexão...`);
   }
 
   addContactFab.addEventListener('click', () => {
     addPartnerModal.classList.remove('hidden');
-    newPartnerInput.focus();
+    newPartnerName.value = '';
+    newPartnerNumber.value = '';
+    photoName.textContent = '';
+    partnerPhotoData = null;
   });
   cancelAddBtn.addEventListener('click', () => addPartnerModal.classList.add('hidden'));
   confirmAddBtn.addEventListener('click', () => {
-    const partnerId = newPartnerInput.value.trim();
-    if (!partnerId) return showToast('Digite o ID');
-    addPartner(partnerId);
+    const name = newPartnerName.value.trim();
+    const number = newPartnerNumber.value.trim();
+    if (!name || !number) return showToast('Preencha nome e número');
+    addPartner(name, number);
     addPartnerModal.classList.add('hidden');
-    newPartnerInput.value = '';
   });
 
   function setupConn(conn) {
     conn.on('open', () => {
-      console.log('Conectado a', conn.peer);
       renderContactList();
       saveData();
-      showToast(`Conectado a ${conn.peer}`);
     });
     conn.on('data', (data) => {
+      if (data.type === 'typing') {
+        if (currentPartner === conn.peer) {
+          typingIndicator.textContent = 'digitando...';
+          typingIndicator.classList.remove('hidden');
+          clearTimeout(typingTimer);
+          typingTimer = setTimeout(() => typingIndicator.classList.add('hidden'), 1500);
+        }
+        return;
+      }
+      if (data.type === 'stoptyping') {
+        if (currentPartner === conn.peer) typingIndicator.classList.add('hidden');
+        return;
+      }
       playBeep();
       addMessageToHistory(conn.peer, { ...data, sent: false });
     });
     conn.on('close', () => {
-      console.log('Desconectado de', conn.peer);
+      delete connections[conn.peer];
       renderContactList();
     });
-    conn.on('error', () => {
-      showToast('Erro na conexão com ' + conn.peer);
-    });
+    conn.on('error', () => showToast('Erro na conexão com ' + (contactProfiles[conn.peer]?.name || conn.peer)));
   }
 
-  // ===== INTERFACE DE CONTATOS =====
+  // ===== LISTA DE CONTATOS =====
   function renderContactList() {
-    const ids = Object.keys(connections);
-    if (ids.length === 0) {
+    const idsToShow = [...new Set([...savedPartners, ...Object.keys(connections)])];
+    if (idsToShow.length === 0) {
       contactList.innerHTML = '<p style="color:#555; text-align:center; margin-top:80px;">Nenhum contato. Toque no + para adicionar.</p>';
       return;
     }
-    contactList.innerHTML = ids.map(id => {
+    contactList.innerHTML = idsToShow.map(id => {
+      const profile = contactProfiles[id] || { name: id, photo: '' };
       const lastMsg = chatHistory[id]?.slice(-1)[0];
       const preview = lastMsg ? (lastMsg.type === 'text' ? lastMsg.content : (lastMsg.type === 'file' ? '📷 Mídia' : '🎤 Áudio')) : '';
       const time = lastMsg ? new Date(lastMsg.time).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '';
       const unread = unreadCounts[id] || 0;
       const isOpen = connections[id] && connections[id].open;
+      const avatarHtml = profile.photo
+        ? `<div class="avatar" style="background-image:url(${profile.photo})"></div>`
+        : `<div class="avatar">${(profile.name || id).charAt(0).toUpperCase()}</div>`;
       return `<div class="contact-item" data-id="${id}">
-        <div class="avatar">${id.charAt(0).toUpperCase()}</div>
-        <div class="contact-info"><div class="contact-name">${id}<span class="${isOpen ? 'status-on' : 'status-off'}">${isOpen ? '(online)' : '(off)'}</span></div><div class="last-msg">${preview}</div></div>
+        ${avatarHtml}
+        <div class="contact-info"><div class="contact-name">${profile.name || id}<span class="${isOpen ? 'status-on' : 'status-off'}">${isOpen ? '(online)' : '(off)'}</span></div><div class="last-msg">${preview}</div></div>
         <div class="contact-meta"><div class="msg-time">${time}</div>${unread ? `<div class="badge">${unread}</div>` : ''}</div>
       </div>`;
     }).join('');
@@ -527,15 +583,15 @@
       let pressTimer;
       item.addEventListener('touchstart', () => {
         pressTimer = setTimeout(() => {
-          const partnerId = item.dataset.id;
-          if (confirm(`Remover ${partnerId}?`)) {
-            if (connections[partnerId]) {
-              connections[partnerId].close();
-              delete connections[partnerId];
-            }
-            delete chatHistory[partnerId];
-            delete unreadCounts[partnerId];
-            if (currentPartner === partnerId) {
+          const pid = item.dataset.id;
+          if (confirm(`Remover ${contactProfiles[pid]?.name || pid}?`)) {
+            if (connections[pid]) connections[pid].close();
+            delete connections[pid];
+            savedPartners = savedPartners.filter(p => p !== pid);
+            delete chatHistory[pid];
+            delete unreadCounts[pid];
+            delete contactProfiles[pid];
+            if (currentPartner === pid) {
               chatScreen.classList.add('hidden');
               conversationsScreen.classList.remove('hidden');
               currentPartner = null;
@@ -553,9 +609,10 @@
   function openChat(partnerId) {
     currentPartner = partnerId;
     unreadCounts[partnerId] = 0;
-    chatTitle.textContent = partnerId;
+    chatTitle.textContent = contactProfiles[partnerId]?.name || partnerId;
     conversationsScreen.classList.add('hidden');
     chatScreen.classList.remove('hidden');
+    typingIndicator.classList.add('hidden');
     renderChatMessages();
     messageInput.focus();
     saveData();
@@ -570,8 +627,9 @@
       let content = '';
       if (m.type === 'text') content = m.content;
       else if (m.type === 'file') {
-        content = m.mime?.startsWith('image/') ? `<img src="${m.content}" style="max-width:200px;">` : `<video src="${m.content}" controls style="max-width:200px;"></video>`;
-      } else if (m.type === 'audio') content = `<audio src="${m.content}" controls style="width:180px;"></audio>`;
+        const src = m.content;
+        content = m.mime?.startsWith('image/') ? `<img src="${src}" style="max-width:180px;">` : `<video src="${src}" controls style="max-width:180px;"></video>`;
+      } else if (m.type === 'audio') content = `<audio src="${m.content}" controls style="width:160px;"></audio>`;
       return `<div class="message ${cls}"><div>${content}</div><div class="time">${time}</div></div>`;
     }).join('');
     chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -594,13 +652,27 @@
     if (!currentPartner) return;
     const conn = connections[currentPartner];
     if (!conn || !conn.open) {
-      showToast('Sem conexão. Verifique se ambos adicionaram o ID.');
+      showToast('Sem conexão. Ambos precisam ter os números salvos.');
       return;
     }
-    const data = { type, content, mime, sender: myId };
+    const data = { type, content, mime, sender: myName || myId };
     conn.send(data);
     addMessageToHistory(currentPartner, { ...data, sent: true });
   }
+
+  // Envio de indicador de digitação
+  let typingTimeout = null;
+  messageInput.addEventListener('input', () => {
+    if (!currentPartner) return;
+    const conn = connections[currentPartner];
+    if (conn && conn.open) {
+      conn.send({ type: 'typing' });
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => {
+        conn.send({ type: 'stoptyping' });
+      }, 1500);
+    }
+  });
 
   sendBtn.addEventListener('click', () => {
     const txt = messageInput.value.trim();
@@ -624,7 +696,7 @@
     if (!recording) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
         audioChunks = [];
         mediaRecorder.ondataavailable = e => { if (e.data.size) audioChunks.push(e.data); };
         mediaRecorder.onstop = () => {
@@ -638,7 +710,9 @@
         recording = true;
         micBtn.textContent = '⏹';
         playBeep();
-      } catch(e) { showToast('Microfone negado'); }
+      } catch(e) {
+        showToast('Microfone exige HTTPS. Use GitHub Pages.');
+      }
     } else {
       mediaRecorder.stop();
       recording = false;
@@ -650,33 +724,53 @@
   async function startCall(video = false) {
     if (!currentPartner) return;
     const conn = connections[currentPartner];
-    if (!conn || !conn.open) return showToast('Conexão não disponível para chamada');
+    if (!conn || !conn.open) return showToast('Conexão não disponível');
     try {
       localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video });
       const call = peer.call(currentPartner, localStream, { video });
       setupCall(call);
-    } catch(e) { showToast('Erro ao iniciar chamada'); }
+    } catch(e) {
+      showToast('Chamadas exigem HTTPS. Use GitHub Pages.');
+    }
   }
+
   function setupCall(call) {
     currentCall = call;
     activeCallPanel.classList.remove('hidden');
-    callInfo.textContent = `📞 ${call.peer}`;
+    callInfo.textContent = call.options.video ? '📹 Chamada de vídeo' : '📞 Chamada de voz';
+    
+    call.on('stream', (remoteStream) => {
+      remoteAudio.srcObject = remoteStream;
+      if (call.options.video) {
+        videoCallContainer.classList.remove('hidden');
+        remoteVideo.srcObject = remoteStream;
+        localVideo.srcObject = localStream;
+      }
+    });
+
     callStartTime = Date.now();
     callTimerInterval = setInterval(() => {
       const s = Math.floor((Date.now() - callStartTime)/1000);
       callTimer.textContent = `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
     }, 1000);
+
     hangupBtn.onclick = () => { call.close(); endCall(); };
     call.on('close', endCall);
     call.on('error', endCall);
   }
+
   function endCall() {
     if (currentCall) currentCall.close();
     if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
     clearInterval(callTimerInterval);
     activeCallPanel.classList.add('hidden');
+    videoCallContainer.classList.add('hidden');
+    remoteAudio.srcObject = null;
+    remoteVideo.srcObject = null;
+    localVideo.srcObject = null;
     currentCall = null;
   }
+
   chatVoiceCallBtn.addEventListener('click', () => startCall(false));
   chatVideoCallBtn.addEventListener('click', () => startCall(true));
 
@@ -695,35 +789,40 @@
     renderContactList();
   });
 
-  // ===== CONFIGURAÇÕES =====
+  // ===== CONFIGURAÇÕES E RESET =====
   settingsToggle.addEventListener('click', () => settingsModal.classList.remove('hidden'));
   closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+
+  resetAppBtn.addEventListener('click', () => {
+    if (confirm('Tem certeza? Todos os dados serão apagados.')) {
+      localStorage.clear();
+      location.reload();
+    }
+  });
 
   function applyBackground() {
     const chatArea = document.querySelector('.chat-area');
     if (!chatArea) return;
     const savedColor = localStorage.getItem('chatBgColor');
     const savedImage = localStorage.getItem('chatBgImage');
-    if (savedImage) {
-      chatArea.style.background = `url(${savedImage}) center/cover`;
-    } else if (savedColor) {
-      chatArea.style.background = savedColor;
-    } else {
-      chatArea.style.background = `#e5ddd5 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M30 30 L70 70 M70 30 L30 70" stroke="rgba(0,0,0,0.08)" stroke-width="2"/></svg>') repeat`;
-    }
+    if (savedImage) chatArea.style.background = `url(${savedImage}) center/cover`;
+    else if (savedColor) chatArea.style.background = savedColor;
+    else chatArea.style.background = `#e5ddd5 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M30 30 L70 70 M70 30 L30 70" stroke="rgba(0,0,0,0.08)" stroke-width="2"/></svg>') repeat`;
   }
 
   bgColorPicker.addEventListener('input', (e) => { localStorage.setItem('chatBgColor', e.target.value); localStorage.removeItem('chatBgImage'); applyBackground(); });
   bgImageInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const file = e.target.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => { localStorage.setItem('chatBgImage', ev.target.result); localStorage.removeItem('chatBgColor'); applyBackground(); };
     reader.readAsDataURL(file);
   });
   resetBgBtn.addEventListener('click', () => { localStorage.removeItem('chatBgColor'); localStorage.removeItem('chatBgImage'); applyBackground(); });
 
-  window.addEventListener('load', initializeApp);
+  window.addEventListener('load', () => {
+    loadData();
+    checkFirstTime();
+  });
   window.addEventListener('beforeunload', () => {
     if (currentCall) currentCall.close();
     Object.values(connections).forEach(c => c.close());
@@ -732,4 +831,4 @@
   });
 </script>
 </body>
-        </html>
+  </html>
